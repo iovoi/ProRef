@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+//==================================
+using Fiddler;
+//==================================
 
 namespace Cello
 {
@@ -37,7 +40,7 @@ namespace Cello
                 {
                     try
                     {
-                        TerminalTextBox.AppendText(str + "\r\n");
+                        OutputTextBox.AppendText(str + "\r\n");
                     }
                     catch (Exception e)
                     {
@@ -45,6 +48,33 @@ namespace Cello
                     }
                 }), s);
             //this.TerminalTextBox.AppendText(s + "\r\n");
+            return true;
+        }
+
+        public bool Add2TreeView(Session parent, Session child)
+        {
+            //if (null != parent)
+            //{
+            //    treeView1.Nodes
+            //}
+            //else
+            //{
+
+            //}
+            BeginInvoke((Action<string>)((str) =>
+                {
+                    try
+                    {
+                   
+                        treeView1.Nodes.Add(child.url);
+                        //treeView1.Update();
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(e.ToString());
+                    }
+                }), child.url);
+
             return true;
         }
 
