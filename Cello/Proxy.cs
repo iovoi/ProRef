@@ -12,6 +12,7 @@ namespace Cello
     public class Proxy
     {
         private MainForm mainForm = null;
+
         private FiddlerCoreStartupFlags proxy_config = FiddlerCoreStartupFlags.Default;
 
         private Hashtable sessionHashTable = new Hashtable();
@@ -25,6 +26,7 @@ namespace Cello
             mainForm = form;
 
             // set up what domains to capture and what types to remove
+            // later should be modified to load from configuration file
             domains[0] = "facebook";
             domains[1] = "akamaihd";
             removeTypes[0] = "jpg";
@@ -35,7 +37,7 @@ namespace Cello
             proxy_config = (proxy_config | FiddlerCoreStartupFlags.DecryptSSL);
             proxy_config = (proxy_config | FiddlerCoreStartupFlags.RegisterAsSystemProxy);
 
-            // set whether to show debug messages
+            // set to show debug messages
             //FiddlerApplication.OnNotification += delegate(object sender, NotificationEventArgs oNEA)
             //{
             //    mainForm.alert_message("OnNotification: " + oNEA.NotifyString);
@@ -49,6 +51,7 @@ namespace Cello
             //FiddlerApplication.Prefs.SetStringPref("fiddler.certmaker.bc.cert", "DO_NOT_TRUST_FiddlerRoot");
             //FiddlerApplication.Prefs.SetStringPref("fiddler.certmaker.bc.key", "9fe03dff02f4610b5ae7d38e19b36990_339cb36d-5481-4643-a543-55d8b0fbee76");
 
+            // check to ensure the decrypt https funtionality is working
             //mainForm.alert_message(CertMaker.rootCertExists() + "");
             if (!Install_Certificate())
                 mainForm.alert_message("install certificate failed");
@@ -56,7 +59,7 @@ namespace Cello
             //X509Store certStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
             //certStore.Open(OpenFlags.OpenExistingOnly);
 
-            // set up listeners
+            // set up listeners to capture the traffic
             //FiddlerApplication.BeforeRequest += FiddlerApplication_BeforeRequest;
             FiddlerApplication.AfterSessionComplete 
                 += FiddlerApplication_AfterSessionComplete;
@@ -101,7 +104,7 @@ namespace Cello
             FiddlerApplication.Startup(7777, proxy_config);
 
             mainForm.WriteLine("Cello started...");
-            mainForm.WriteLine(" ");
+            mainForm.WriteLine(" "); // print return to separate the output line later
             //mainForm.WriteLine("Press q to quit");
 
         }
@@ -116,10 +119,10 @@ namespace Cello
             //mainForm.WriteLine("osession.url: " + oSession.url);
             //mainForm.WriteLine("request.headers.tostring(): " + oSession.oRequest.headers.ToString());
 
-            //SessionHashTable.Add(oSession.url, oSession);
-            //Session p = GetSessionParent(oSession);
-            //mainForm.Add2TreeView(p, oSession);
-            mainForm.Add2TreeView(null, oSession);
+            Session p = GetSessionParent(oSession);
+            mainForm.Add2TreeView(p, oSession);
+            SessionHashTable.Add(oSession.url, oSession);
+            //mainForm.Add2TreeView(null, oSession);
 
         }
 
@@ -143,8 +146,9 @@ namespace Cello
                 //}
                 if (SessionHashTable.Contains(s.oRequest.headers["referer"]))
                     return (Session)SessionHashTable[s.oRequest.headers["referer"]];
+                else
+                    return null;
             }
-            return null;
         }
 
         // deprecated
