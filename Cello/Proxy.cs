@@ -12,35 +12,53 @@ namespace Cello
 {
     public class Proxy
     {
+        // lock to ensure thread safty
+        private readonly static object syncObject = new object();
+
         // the form object that the Proxy attached to
         private MainForm mainForm = null;
 
         // fiddler core configuration
         private FiddlerCoreStartupFlags proxy_config = FiddlerCoreStartupFlags.Default;
 
-        // used to store the session 
-        private Hashtable sessionHashTable = new Hashtable();
-        public Hashtable SessionHashTable 
-        { 
-            get { return sessionHashTable; } 
-            set { if (null != value) sessionHashTable = value; } 
-        }
+        //// used to store the session 
+        //private Hashtable sessionHashTable = new Hashtable();
+        //public Hashtable SessionHashTable 
+        //{ 
+        //    get { return sessionHashTable; } 
+        //    set { if (null != value) sessionHashTable = value; } 
+        //}
 
         // set up domains to track
         private string[] domains = new string[2];
         private string[] removeTypes = new string[4];
 
         // the wood to construct the trees
-        private Woods sessionWoods = new Woods();
+        //private Woods sessionWoods = new Woods();
+        private Woods sessionWoods = null;
         public Woods SessionWoods 
         {
-            get { return sessionWoods; }
-            set { if (null != value) sessionWoods = value; }
+            get 
+            {
+                lock (syncObject)
+                {
+                    return sessionWoods;
+                }
+            }
+            set 
+            {
+                lock (syncObject)
+                {
+                    if (null != value) sessionWoods = value;
+                }
+            }
         }
 
         public Proxy(MainForm form)
         {
             mainForm = form;
+
+            SessionWoods = new Woods(mainForm);
 
             // set up what domains to capture and what types to remove
             // later should be modified to load from configuration file
@@ -155,7 +173,9 @@ namespace Cello
                 referer = "CONNECT";
             }
 
-            mainForm.WriteLine(oSession.id.ToString() + ": " + referer);
+            //mainForm.WriteLine(oSession.id.ToString() + ": " + referer);
+            //mainForm.WriteLine(oSession.id.ToString() + ": " + oSession.ToString());
+            mainForm.WriteLine(oSession.id.ToString() + ": " + oSession.RequestMethod + oSession.fullUrl);
 
             // testing
             //mainForm.WriteLine(oSession.oRequest.headers.Exists("referer") ? "referer" + oSession.oRequest.headers["referer"] : "referer: null");
@@ -173,31 +193,31 @@ namespace Cello
 
         }
 
-        protected Session GetSessionParent(Session s)
-        {
-            if (SessionHashTable.Count == 0 || null == s.oRequest.headers 
-                || !s.oRequest.headers.Exists("Referer"))
-            {
-                return null;
-            }
-            else
-            {
-                //for (SessionHashTable.Contains(s.oRequest.headers))
-                //IEnumerator entr =  sessionHashTable.GetEnumerator();
-                //while (entr.MoveNext())
-                //{
-                //    Session cur = (Session)entr.Current;
-                //    if (cur.oRequest.headers.Exists("referer"))
-                //    {
-                //        if ()
-                //    }
-                //}
-                if (SessionHashTable.Contains(s.oRequest.headers["Referer"]))
-                    return (Session)SessionHashTable[s.oRequest.headers["Referer"]];
-                else
-                    return null;
-            }
-        }
+        //protected Session GetSessionParent(Session s)
+        //{
+        //    if (SessionHashTable.Count == 0 || null == s.oRequest.headers 
+        //        || !s.oRequest.headers.Exists("Referer"))
+        //    {
+        //        return null;
+        //    }
+        //    else
+        //    {
+        //        //for (SessionHashTable.Contains(s.oRequest.headers))
+        //        //IEnumerator entr =  sessionHashTable.GetEnumerator();
+        //        //while (entr.MoveNext())
+        //        //{
+        //        //    Session cur = (Session)entr.Current;
+        //        //    if (cur.oRequest.headers.Exists("referer"))
+        //        //    {
+        //        //        if ()
+        //        //    }
+        //        //}
+        //        if (SessionHashTable.Contains(s.oRequest.headers["Referer"]))
+        //            return (Session)SessionHashTable[s.oRequest.headers["Referer"]];
+        //        else
+        //            return null;
+        //    }
+        //}
 
         // deprecated
         //public void wait2Stop()
