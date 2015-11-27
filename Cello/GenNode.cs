@@ -10,29 +10,101 @@ using System.Diagnostics;
 
 namespace Cello
 {
-    class GenNode<T> : IComparable<GenNode<T>> 
+    public class GenNode<T> : IComparable<GenNode<T>> 
         //where T : 
     {
+        // lock to ensure thread safe
+        private readonly static object syncObject = new object();
+
         private T data;
-        public T Data { get; set; }
+        public T Data 
+        { 
+            get 
+            { 
+                lock (syncObject) 
+                { 
+                    return data; 
+                } 
+            }
+
+            set
+            {
+                lock (syncObject)
+                {
+                    data = value;
+                }
+            }
+        }
 
         private static Comparison<GenNode<T>> compare;
-        public static Comparison<GenNode<T>> Compare { get; set; }
+        public static Comparison<GenNode<T>> Compare 
+        {
+            get
+            {
+                lock (syncObject)
+                {
+                    return compare;
+                }
+
+            }
+            set
+            {
+                lock (syncObject)
+                {
+                    compare = value;
+                }
+            }
+        }
 
         private List<GenNode<T>> parents = new List<GenNode<T>>();
-        public List<GenNode<T>> Parents { get; set; }
+        public List<GenNode<T>> Parents 
+        { 
+            get 
+            { 
+                lock (syncObject)
+                {
+                    return parents;
+                }
+            } 
+            set 
+            {
+                lock (syncObject)
+                {
+                    if (null != value) parents = value;
+                }
+            } 
+        }
 
         private List<GenNode<T>> children = new List<GenNode<T>>();
-        public List<GenNode<T>> Children { get; set; }
+        public List<GenNode<T>> Children 
+        { 
+            get 
+            {
+                lock (syncObject)
+                {
+                    return children;
+                }
+            } 
+            set 
+            {
+                lock (syncObject)
+                {
+                    if (null != value) children = value;
+                }
+            } 
+        }
 
         // all three parameters can not be null
-        public GenNode(ref T t, ref GenNode<T> t_parent, ref GenNode<T> t_child)
+        public GenNode(T t, GenNode<T> t_parent, GenNode<T> t_child)
         {
             Debug.Assert(null != t && null != t_parent && null != t_child);
 
-            Data = t;
-            Parents.Add(t_parent);
-            Children.Add(t_child);
+            lock (syncObject)
+            {
+                Data = t;
+                Parents.Add(t_parent);
+                Children.Add(t_child);
+            }
         }
 
         // all parameters can not be null
@@ -48,27 +120,36 @@ namespace Cello
         //    Children.Add(t_child);
         //}
 
-        public GenNode(ref T t)
+        public GenNode(T t)
         {
             Debug.Assert(null != t);
 
-            Data = t;
+            lock (syncObject)
+            {
+                Data = t;
+            }
         }
 
-        public bool update_parent(ref GenNode<T> t_parent, Comparison<GenNode<T>> c)
+        public bool update_parent(GenNode<T> t_parent, Comparison<GenNode<T>> c)
         {
-            Debug.Assert(null != t_parent); 
+            Debug.Assert(null != t_parent);
 
-            Parents.Add(t_parent);
-            return update_parent(c);
+            lock (syncObject)
+            {
+                Parents.Add(t_parent);
+                return update_parent(c);
+            }
         }
 
-        public bool update_children(ref GenNode<T> t_child, Comparison<GenNode<T>> c)
+        public bool update_children(GenNode<T> t_child, Comparison<GenNode<T>> c)
         {
             Debug.Assert(null != t_child);
 
-            Children.Add(t_child);
-            return update_children(c);
+            lock (syncObject)
+            {
+                Children.Add(t_child);
+                return update_children(c);
+            }
         }
 
         protected bool update_parent(Comparison<GenNode<T>> c)
@@ -97,16 +178,26 @@ namespace Cello
 
         public bool remove_parent(GenNode<T> s)
         {
-            //Parents.Remove(Parents.Find(o => o.id == s.id));
-            Parents.Remove(Parents.Find(o => o.Equals(s)));
-            return true;
+            Debug.Assert(null != s);
+
+            lock (syncObject)
+            {
+                //Parents.Remove(Parents.Find(o => o.id == s.id));
+                Parents.Remove(Parents.Find(o => o.Equals(s)));
+                return true;
+            }
         }
 
         public bool remove_child(GenNode<T> s)
         {
-            //Children.Remove(Children.Find(o => o.id == s.id));
-            Children.Remove(Children.Find(o => o.Equals(s)));
-            return true;
+            Debug.Assert(null != s);
+
+            lock (syncObject)
+            {
+                //Children.Remove(Children.Find(o => o.id == s.id));
+                Children.Remove(Children.Find(o => o.Equals(s)));
+                return true;
+            }
         }
 
         public override bool Equals(object obj)
@@ -128,6 +219,11 @@ namespace Cello
                 return false;
 
             return 0 == Compare(this, node);
+        }
+
+        public override int GetHashCode()
+        {
+            return Data.GetHashCode();
         }
 
         public int CompareTo(object obj)

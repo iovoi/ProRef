@@ -36,11 +36,11 @@ namespace Cello
             Parents.Add(t_parent);
         }
 
-        public Node(ref Session t, ref Session t_child)
-        {
-            Data = t;
-            Children.Add(t_child);
-        }
+        //public Node(ref Session t, ref Session t_child)
+        //{
+        //    Data = t;
+        //    Children.Add(t_child);
+        //}
 
         public Node(ref Session t)
         {

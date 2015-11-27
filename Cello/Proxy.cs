@@ -6,20 +6,37 @@ using System.Threading.Tasks;
 using Fiddler;
 //using System.Security.Cryptography.X509Certificates;
 using System.Collections;
+using System.Diagnostics;
 
 namespace Cello
 {
     public class Proxy
     {
+        // the form object that the Proxy attached to
         private MainForm mainForm = null;
 
+        // fiddler core configuration
         private FiddlerCoreStartupFlags proxy_config = FiddlerCoreStartupFlags.Default;
 
+        // used to store the session 
         private Hashtable sessionHashTable = new Hashtable();
-        public Hashtable SessionHashTable { get; set; }
+        public Hashtable SessionHashTable 
+        { 
+            get { return sessionHashTable; } 
+            set { if (null != value) sessionHashTable = value; } 
+        }
 
+        // set up domains to track
         private string[] domains = new string[2];
         private string[] removeTypes = new string[4];
+
+        // the wood to construct the trees
+        private Woods sessionWoods = new Woods();
+        public Woods SessionWoods 
+        {
+            get { return sessionWoods; }
+            set { if (null != value) sessionWoods = value; }
+        }
 
         public Proxy(MainForm form)
         {
@@ -34,6 +51,7 @@ namespace Cello
             removeTypes[2] = "jpeg";
             removeTypes[3] = "gif";
 
+            // set fiddler core configuration
             proxy_config = (proxy_config | FiddlerCoreStartupFlags.DecryptSSL);
             proxy_config = (proxy_config | FiddlerCoreStartupFlags.RegisterAsSystemProxy);
 
@@ -63,6 +81,8 @@ namespace Cello
             //FiddlerApplication.BeforeRequest += FiddlerApplication_BeforeRequest;
             FiddlerApplication.AfterSessionComplete 
                 += FiddlerApplication_AfterSessionComplete;
+
+            // set up the Woods that hold the sessions
 
         }
 
@@ -111,7 +131,31 @@ namespace Cello
 
         void FiddlerApplication_AfterSessionComplete(Session oSession)
         {
-            mainForm.WriteLine(oSession.ToString());
+            Debug.Assert(null != oSession);
+            Debug.Assert(null != SessionWoods);
+
+            //mainForm.WriteLine(oSession.ToString());
+            string referer = "null";
+            if (!oSession.RequestMethod.Equals("CONNECT"))
+            {
+                if (null != oSession.oRequest.headers)
+                {
+                    if (oSession.oRequest.headers.Exists("Referer"))
+                    {
+                        referer = string.IsNullOrEmpty(oSession.oRequest.headers["Referer"]) ? "initiating request" : oSession.oRequest.headers["Referer"];
+                    }
+                    else
+                        referer = "no referer";
+                }
+                else
+                    referer = "no headers";
+            }
+            else
+            {
+                referer = "CONNECT";
+            }
+
+            mainForm.WriteLine(oSession.id.ToString() + ": " + referer);
 
             // testing
             //mainForm.WriteLine(oSession.oRequest.headers.Exists("referer") ? "referer" + oSession.oRequest.headers["referer"] : "referer: null");
@@ -119,16 +163,20 @@ namespace Cello
             //mainForm.WriteLine("osession.url: " + oSession.url);
             //mainForm.WriteLine("request.headers.tostring(): " + oSession.oRequest.headers.ToString());
 
-            Session p = GetSessionParent(oSession);
-            mainForm.Add2TreeView(p, oSession);
-            SessionHashTable.Add(oSession.url, oSession);
+            // construct the woods from completed sessions
+            SessionWoods.add(oSession);
+
+            //Session p = GetSessionParent(oSession);
+            //mainForm.Add2TreeView(p, oSession);
+            //SessionHashTable.Add(oSession.url, oSession);
             //mainForm.Add2TreeView(null, oSession);
 
         }
 
         protected Session GetSessionParent(Session s)
         {
-            if (SessionHashTable.Count == 0 || !s.oRequest.headers.Exists("referer"))
+            if (SessionHashTable.Count == 0 || null == s.oRequest.headers 
+                || !s.oRequest.headers.Exists("Referer"))
             {
                 return null;
             }
@@ -144,8 +192,8 @@ namespace Cello
                 //        if ()
                 //    }
                 //}
-                if (SessionHashTable.Contains(s.oRequest.headers["referer"]))
-                    return (Session)SessionHashTable[s.oRequest.headers["referer"]];
+                if (SessionHashTable.Contains(s.oRequest.headers["Referer"]))
+                    return (Session)SessionHashTable[s.oRequest.headers["Referer"]];
                 else
                     return null;
             }
