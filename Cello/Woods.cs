@@ -79,6 +79,7 @@ namespace Cello
         public bool add(Session s)
         {
             Debug.Assert(null != s);
+            Debug.Assert(!SessionDict.Keys.Contains(s.id));
 
             lock (syncObject)
             {
@@ -97,13 +98,15 @@ namespace Cello
 
                     Roots[get_root(parent).ID]++;
 
-                    return true;
+                    //return true;
                 }
                 else
                 {
                     Roots.Add(s.id, 1);
-                    return true;
+                    //return true;
                 }
+
+                return update();
                 //// there are totally 8 http methods: GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE
                 //if (n.Data.HTTPMethodIs("GET") || n.Data.HTTPMethodIs("POST"))
                 //{
@@ -122,16 +125,19 @@ namespace Cello
         {
             Debug.Assert(node.Parents.Count <= 1);
 
-            Node p = node;
-            Debug.Assert(p.Parents.Count <= 1);
-            while (p.Parents.Count != 0)
+            lock (syncObject)
             {
-                Debug.Assert(1 == p.Parents.Count);
-                p = p.Parents[0];
+                Node p = node;
                 Debug.Assert(p.Parents.Count <= 1);
-            }
+                while (p.Parents.Count != 0)
+                {
+                    Debug.Assert(1 == p.Parents.Count);
+                    p = p.Parents[0];
+                    Debug.Assert(p.Parents.Count <= 1);
+                }
 
-            return p;
+                return p;
+            }
         }
 
         // parent: find either an 302 that match the current address or session that match current referer
@@ -139,44 +145,74 @@ namespace Cello
         //           else find the sessions whose address match current address
         protected Node get_parent(Session s)
         {
-            if (null != s.oRequest.headers && s.oRequest.headers.Exists("referer"))
+            lock (syncObject)
             {
-                //List<int> reverseKeyList = SessionDict.Keys.OrderByDescending(e => e).ToList();
-                List<int> reverseKeyList = (from k in SessionDict.Keys
-                                            //where k < s.id && !"connect".Equals(SessionDict[k].RequestMethod) 
-                                            where k < s.id && !SessionDict[k].RequestMethod.Equals("CONNECT")
-                                            select k).OrderByDescending(e => e).ToList();
-                foreach (int i in reverseKeyList)
+                if (null != s.oRequest.headers && s.oRequest.headers.Exists("referer"))
                 {
-                    Session tempSession = SessionDict[i];
-                    if (tempSession.responseCode == 302
-                        && null != tempSession.oResponse.headers
-                        && tempSession.oResponse.headers.ExistsAndEquals("Location", s.fullUrl))
+                    //List<int> reverseKeyList = SessionDict.Keys.OrderByDescending(e => e).ToList();
+                    List<int> reverseKeyList = (from k in SessionDict.Keys
+                                                //where k < s.id && !"connect".Equals(SessionDict[k].RequestMethod) 
+                                                where k < s.id && !SessionDict[k].RequestMethod.Equals("CONNECT")
+                                                select k).OrderByDescending(e => e).ToList();
+                    foreach (int i in reverseKeyList)
                     {
-                        return NodeDict[tempSession.id];
+                        Session tempSession = SessionDict[i];
+                        if (tempSession.responseCode == 302
+                            && null != tempSession.oResponse.headers
+                            && tempSession.oResponse.headers.ExistsAndEquals("Location", s.fullUrl))
+                        {
+                            return NodeDict[tempSession.id];
+                        }
+                        else if (tempSession.fullUrl.Equals(s.oRequest.headers["Referer"]))
+                        {
+                            return NodeDict[tempSession.id];
+                        }
                     }
-                    else if (tempSession.fullUrl.Equals(s.oRequest.headers["Referer"]))
+                    return null;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        protected bool update()
+        {
+            lock (syncObject)
+            {
+                List<int> rootList = Roots.Keys.ToList();
+                foreach (int k in rootList)
+                {
+                    Session rootSession = SessionDict[k];
+                    Node rootNode = NodeDict[k];
+                    Node parent = get_parent(rootSession);
+                    if (null != parent)
                     {
-                        return NodeDict[tempSession.id];
+                        parent.Children.Add(rootNode);
+
+                        rootNode.Parents.Add(parent);
+                        Debug.Assert(1 == rootNode.Parents.Count);
+
+                        Roots[get_root(parent).ID] += Roots[k];
+                        Roots.Remove(k);
                     }
                 }
-                return null;
-            }
-            else
-            {
-                return null;
+                return true;
             }
         }
 
-        protected void update()
-        {
-            foreach (int k in Roots.Keys)
-            {
-                List<int> reverseKeyList = (from i in SessionDict.Keys 
-                                            where i < k && !SessionDict[i].RequestMethod.Equals("CONNECT") 
-                                            select i).OrderByDescending(e => e).ToList();
+        //protected void show()
+        //{
+        //    List<int> traverseList = Roots.Keys.ToList();
+        //    int it = 0;
+        //    while (it <= traverseList.Count)
+        //    {
+        //        traverseList.AddRange(NodeDict[it].Children.ToDictionary(o => o.ID, o => o).Keys);
+        //        it++;
+        //    }
+        //}
 
-            }
-        }
+        //private void doSomething() { }
     }
 }

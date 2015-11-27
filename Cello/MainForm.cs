@@ -51,7 +51,7 @@ namespace Cello
             return true;
         }
 
-        public bool Add2TreeView(Session parent, Session child)
+        public bool Add2TreeView(SortedDictionary<int, Session> sessionDict, SortedDictionary<int, Node> nodeDict, SortedDictionary<int, int> roots)
         {
             //if (null != parent)
             //{
@@ -61,19 +61,19 @@ namespace Cello
             //{
 
             //}
-            BeginInvoke((Action<string>)((str) =>
-                {
-                    try
-                    {
-                   
-                        treeView1.Nodes.Add(child.url);
-                        //treeView1.Update();
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.Show(e.ToString());
-                    }
-                }), child.url);
+            //BeginInvoke((Action<string>)((str) =>
+            //    {
+            //        try
+            //        {
+
+            //            treeView1.Nodes.Add(child.url);
+            //            //treeView1.Update();
+            //        }
+            //        catch (Exception e)
+            //        {
+            //            MessageBox.Show(e.ToString());
+            //        }
+            //    }), child.url);
 
             return true;
         }

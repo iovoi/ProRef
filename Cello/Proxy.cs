@@ -175,7 +175,7 @@ namespace Cello
 
             //mainForm.WriteLine(oSession.id.ToString() + ": " + referer);
             //mainForm.WriteLine(oSession.id.ToString() + ": " + oSession.ToString());
-            mainForm.WriteLine(oSession.id.ToString() + ": " + oSession.RequestMethod + oSession.fullUrl);
+            mainForm.WriteLine(oSession.id.ToString() + ": " + oSession.RequestMethod + " " + oSession.fullUrl);
 
             // testing
             //mainForm.WriteLine(oSession.oRequest.headers.Exists("referer") ? "referer" + oSession.oRequest.headers["referer"] : "referer: null");
