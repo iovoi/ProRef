@@ -75,6 +75,33 @@ namespace Cello
             //        }
             //    }), child.url);
 
+            //Object[] param = new Object[3] {sessionDict, nodeDict, roots};
+
+            //BeginInvoke((Action<Object[]>)((par) =>
+            //{
+            //    try
+            //    {
+            //        SortedDictionary<int, Session> sDict = par[0] as SortedDictionary<int, Session>;
+            //        SortedDictionary<int, Node> nDict = par[1] as SortedDictionary<int, Node>;
+            //        SortedDictionary<int, int> rDict = par[2] as SortedDictionary<int, int>;
+            //        if (null == sDict || null == nDict || null == rDict)
+            //            throw new ArgumentException("argument error");
+
+            //        LinkedList<int> traverseList = new LinkedList<int>(rDict.Keys.ToList());
+            //        TreeNodeCollection current = treeView1.Nodes;
+            //        foreach (int n in traverseList)
+            //        {
+            //            current.Add(sDict[n].id.ToString() + ": " + sDict[n].RequestMethod + " " + sDict[n].fullUrl);
+            //        }
+
+
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        MessageBox.Show(e.ToString());
+            //    }
+            //}), param );
+
             return true;
         }
 
