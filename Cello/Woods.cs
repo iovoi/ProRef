@@ -198,8 +198,11 @@ namespace Cello
                         Roots.Remove(k);
                     }
                 }
+                if (mainForm.Created)
+                    mainForm.Add2TreeView(SessionDict, NodeDict, Roots);
                 return true;
             }
+            //return true;
         }
 
         //protected void show()
