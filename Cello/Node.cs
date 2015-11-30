@@ -87,8 +87,6 @@ namespace Cello
 
         public Node(int t)
         {
-            //Debug.Assert(null != t);
-
             lock (syncObject)
             {
                 ID = t;
@@ -119,17 +117,6 @@ namespace Cello
 
         protected bool update_parent()
         {
-            //Parents.Sort(delegate(ref Session t1, ref Session t2)
-            //{ 
-            //    return t1.id <= t2.id ? -1 : 1; 
-            //});
-            //Parents = Parents.OrderBy<Session, int>((ref s) => s.id).ToList();
-            //Parents.OrderBy<Session, int>(delegate(ref Session s)
-            //{
-            //    return s.id;
-            //});
-
-            //Parents = Parents.OrderBy<Session, int>(s => s.id).ToList();
             Parents.Sort(delegate(Node entry1, Node entry2)
             {
                 if (entry1.ID == entry2.ID)
@@ -144,7 +131,6 @@ namespace Cello
 
         protected bool update_children()
         {
-            //Children = Children.OrderBy<Session, int>(s => s.id).ToList();
             Children.Sort(delegate(Node entry1, Node entry2)
             {
                 if (entry1.ID == entry2.ID)
@@ -163,7 +149,6 @@ namespace Cello
 
             lock (syncObject)
             {
-                //Parents.Remove(Parents.Find(o => o.id == s.id));
                 Parents.Remove(Parents.Find(o => o.ID == n.ID));
                 return true;
             }
@@ -175,56 +160,9 @@ namespace Cello
 
             lock (syncObject)
             {
-                //Children.Remove(Children.Find(o => o.id == s.id));
                 Children.Remove(Children.Find(o => o.ID == n.ID));
                 return true;
             }
         }
-
-        //public override bool Equals(object obj)
-        //{
-        //    if (null == obj)
-        //        return false;
-
-        //    GenNode<T> node = obj as GenNode<T>;
-        //    if (null == node)
-        //        throw new ArgumentException("object is not a GenNode<T> type");
-
-        //    return 0 == Compare(this, node);
-        //    //return base.Equals(node);
-        //}
-
-        //public bool Equals(GenNode<T> node)
-        //{
-        //    if (null == node)
-        //        return false;
-
-        //    return 0 == Compare(this, node);
-        //}
-
-        //public override int GetHashCode()
-        //{
-        //    return Data.GetHashCode();
-        //}
-
-        //public int CompareTo(object obj)
-        //{
-        //    if (null == obj)
-        //        return 1;
-
-        //    GenNode<T> node = obj as GenNode<T>;
-        //    if (null != node)
-        //        return Compare(this, node);
-        //    else
-        //        throw new ArgumentException("object is not a GenNode<T> type");
-        //}
-
-        //public int CompareTo(GenNode<T> node)
-        //{
-        //    if (null == node)
-        //        return 1;
-
-        //    return Compare(this, node);
-        //}
     }
 }

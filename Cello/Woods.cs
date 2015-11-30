@@ -55,24 +55,10 @@ namespace Cello
                     return roots;
                 }
             }
-            //set 
-            //{ 
-            //    SessionDict.Add(value.Data.id, value); 
-            //    Root = SessionDict[value.Data.id]; 
-            //} 
         }
 
         public Woods(MainForm m)
         {
-            //lock (syncObject)
-            //{
-            //    // initialize GenNode<int>
-            //    GenNode<int>.Compare = new Comparison<GenNode<int>>
-            //    (delegate(GenNode<int> a, GenNode<int> b)
-            //    {
-            //        return a.Data.CompareTo(b.Data);
-            //    });
-            //}
             mainForm = m;
         }
 
@@ -107,17 +93,6 @@ namespace Cello
                 }
 
                 return update();
-                //// there are totally 8 http methods: GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE
-                //if (n.Data.HTTPMethodIs("GET") || n.Data.HTTPMethodIs("POST"))
-                //{
-
-                //    return true;
-                //}
-                //else
-                //{
-                //    SessionDict.Add(n.Data.id, n);
-                //    return true;
-                //}
             }
         }
 
@@ -149,6 +124,8 @@ namespace Cello
             {
                 if (null != s.oRequest.headers && s.oRequest.headers.Exists("referer"))
                 {
+                    // there are totally 8 http methods: GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE
+                    // we only excludes CONNECT here
                     //List<int> reverseKeyList = SessionDict.Keys.OrderByDescending(e => e).ToList();
                     List<int> reverseKeyList = (from k in SessionDict.Keys
                                                 //where k < s.id && !"connect".Equals(SessionDict[k].RequestMethod) 
@@ -202,20 +179,7 @@ namespace Cello
                     mainForm.Add2TreeView(SessionDict, NodeDict, Roots);
                 return true;
             }
-            //return true;
         }
 
-        //protected void show()
-        //{
-        //    List<int> traverseList = Roots.Keys.ToList();
-        //    int it = 0;
-        //    while (it <= traverseList.Count)
-        //    {
-        //        traverseList.AddRange(NodeDict[it].Children.ToDictionary(o => o.ID, o => o).Keys);
-        //        it++;
-        //    }
-        //}
-
-        //private void doSomething() { }
     }
 }

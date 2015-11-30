@@ -21,14 +21,6 @@ namespace Cello
         // fiddler core configuration
         private FiddlerCoreStartupFlags proxy_config = FiddlerCoreStartupFlags.Default;
 
-        //// used to store the session 
-        //private Hashtable sessionHashTable = new Hashtable();
-        //public Hashtable SessionHashTable 
-        //{ 
-        //    get { return sessionHashTable; } 
-        //    set { if (null != value) sessionHashTable = value; } 
-        //}
-
         // set up domains to track
         private string[] domains = new string[2];
         private string[] removeTypes = new string[4];
@@ -58,6 +50,7 @@ namespace Cello
         {
             mainForm = form;
 
+            // set up the Woods that holds the sessions
             SessionWoods = new Woods(mainForm);
 
             // set up what domains to capture and what types to remove
@@ -99,9 +92,6 @@ namespace Cello
             //FiddlerApplication.BeforeRequest += FiddlerApplication_BeforeRequest;
             FiddlerApplication.AfterSessionComplete 
                 += FiddlerApplication_AfterSessionComplete;
-
-            // set up the Woods that hold the sessions
-
         }
 
         public static bool Install_Certificate()
@@ -192,44 +182,6 @@ namespace Cello
             //mainForm.Add2TreeView(null, oSession);
 
         }
-
-        //protected Session GetSessionParent(Session s)
-        //{
-        //    if (SessionHashTable.Count == 0 || null == s.oRequest.headers 
-        //        || !s.oRequest.headers.Exists("Referer"))
-        //    {
-        //        return null;
-        //    }
-        //    else
-        //    {
-        //        //for (SessionHashTable.Contains(s.oRequest.headers))
-        //        //IEnumerator entr =  sessionHashTable.GetEnumerator();
-        //        //while (entr.MoveNext())
-        //        //{
-        //        //    Session cur = (Session)entr.Current;
-        //        //    if (cur.oRequest.headers.Exists("referer"))
-        //        //    {
-        //        //        if ()
-        //        //    }
-        //        //}
-        //        if (SessionHashTable.Contains(s.oRequest.headers["Referer"]))
-        //            return (Session)SessionHashTable[s.oRequest.headers["Referer"]];
-        //        else
-        //            return null;
-        //    }
-        //}
-
-        // deprecated
-        //public void wait2Stop()
-        //{
-        //    ConsoleKeyInfo keypress;
-        //    keypress = Console.ReadKey();
-
-        //    if (keypress.Key == ConsoleKey.Q)
-        //    {
-        //        this.Stop();
-        //    }
-        //}
 
         public void Stop()
         {

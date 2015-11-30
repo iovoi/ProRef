@@ -50,7 +50,6 @@ namespace Cello
                             MessageBox.Show(e.ToString());
                         }
                     }), s);
-                //this.TerminalTextBox.AppendText(s + "\r\n");
                 return true;
             }
             else
@@ -59,85 +58,11 @@ namespace Cello
 
         public bool Add2TreeView(SortedDictionary<int, Session> sessionDict, SortedDictionary<int, Node> nodeDict, SortedList<int, int> roots)
         {
-            //if (null != parent)
-            //{
-            //    treeView1.Nodes
-            //}
-            //else
-            //{
-
-            //}
-            //BeginInvoke((Action<string>)((str) =>
-            //    {
-            //        try
-            //        {
-
-            //            treeView1.Nodes.Add(child.url);
-            //            //treeView1.Update();
-            //        }
-            //        catch (Exception e)
-            //        {
-            //            MessageBox.Show(e.ToString());
-            //        }
-            //    }), child.url);
-
             if (this.Created)
             {
 
                 Debug.Assert(null != sessionDict && null != nodeDict && null != roots);
-                //SortedDictionary<int, int> rootDictionary = new SortedDictionary<int,int>(roots);
                 Object[] param = new Object[3] { sessionDict, nodeDict, roots };
-
-                //BeginInvoke((Action<Object[]>)(delegate(Object[] par) 
-                //BeginInvoke((Action<string>)((str) =>
-                //Action<SortedDictionary<int, Session>, SortedDictionary<int, Node>, SortedList<int, int>> action = (sD, nD, r) =>
-                //{
-                //    ;
-                //};
-                //BeginInvoke(action, sessionDict, nodeDict, roots);
-
-                //BeginInvoke((Action<Object[]>)(delegate(Object[] par)
-                //{
-                //    try
-                //    {
-                //        SortedDictionary<int, Session> sDict = par[0] as SortedDictionary<int, Session>;
-                //        SortedDictionary<int, Node> nDict = par[1] as SortedDictionary<int, Node>;
-                //        SortedList<int, int> rDict = par[2] as SortedList<int, int>;
-                //        if (null == sDict || null == nDict || null == rDict)
-                //            throw new ArgumentException("argument error");
-
-                //        Queue<int> traverseQueue = new Queue<int>(rDict.Keys.ToList());
-                //        TreeNodeCollection current = treeView1.Nodes;
-                //        Queue<TreeNode> treeViewNodeQueue = new Queue<TreeNode>();
-                //        int node_i = 0;
-                //        foreach (int n in traverseQueue)
-                //        {
-                //            current.Add(sDict[n].id.ToString() + ": " + sDict[n].RequestMethod + " " + sDict[n].fullUrl);
-                //            treeViewNodeQueue.Enqueue(current[node_i]);
-                //            node_i++;
-                //        }
-
-                //        while (traverseQueue.Count > 0)
-                //        {
-                //            int head = traverseQueue.Dequeue();
-                //            TreeNode t = treeViewNodeQueue.Dequeue();
-                //            current = t.Nodes;
-                //            node_i = 0;
-                //            foreach (Node n in nDict[head].Children)
-                //            {
-                //                current.Add(sDict[n.ID].id.ToString() + ": " + sDict[n.ID].RequestMethod + " " + sDict[n.ID].fullUrl);
-                //                traverseQueue.Enqueue(n.ID);
-                //                treeViewNodeQueue.Enqueue(current[node_i]);
-                //                node_i++;
-                //            }
-                //        }
-
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        MessageBox.Show(e.ToString());
-                //    }
-                //}), param);
 
                 Action<SortedDictionary<int, Session>, SortedDictionary<int, Node>, SortedList<int, int>> action = (sD, nD, r) =>
                 {
@@ -192,8 +117,8 @@ namespace Cello
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            proxy.Stop();
             //MessageBox.Show("Fiddler proxy stopped");
+            proxy.Stop();
         }
 
         public void alert_message(string s)
