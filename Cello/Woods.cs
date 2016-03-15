@@ -82,6 +82,7 @@ namespace Cello
                     n.Parents.Add(parent);
                     Debug.Assert(1 == n.Parents.Count);
 
+                    // update the number of nodes that link to the root node
                     Roots[get_root(parent).ID]++;
 
                     //return true;
@@ -115,14 +116,21 @@ namespace Cello
             }
         }
 
-        // parent: find either an 302 that match the current address or session that match current referer
-        // children: if current response is 302, find the nearest session (one and only one) whose address is exactly matched
-        //           else find the sessions whose address match current address
+        // parent: Has zero or one. If no referer header, check the nearest 302 redirection address which match the current one.
+        //         If no header and no 302 redirected address matched, no parent.
+        //         If referer header exits, find either an 302 redirection address that match the current address 
+        //         or session that match current referer, depends whichever is nearer.
+        // children: Find until the next GET with the same url. If current response is 302, then it has only one child,
+        //           and the child has the exactly matched url with the redirected url or no child
+        //           (the nearest session, one and only one, whose address is exactly matched).
+        //           If not 302 response, then find the sessions who has referer header 
+        //           and whose referer header address match current address
         protected Node get_parent(Session s)
         {
             lock (syncObject)
             {
-                if (null != s.oRequest.headers && s.oRequest.headers.Exists("referer"))
+                //if (null != s.oRequest.headers && s.oRequest.headers.Exists("referer"))
+                if (null != s.oRequest.headers)
                 {
                     // there are totally 8 http methods: GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE
                     // we only excludes CONNECT here
@@ -140,7 +148,8 @@ namespace Cello
                         {
                             return NodeDict[tempSession.id];
                         }
-                        else if (tempSession.fullUrl.Equals(s.oRequest.headers["Referer"]))
+                        else if (s.oRequest.headers.Exists("referer") 
+                            && tempSession.fullUrl.Equals(s.oRequest.headers["Referer"]))
                         {
                             return NodeDict[tempSession.id];
                         }
@@ -154,6 +163,10 @@ namespace Cello
             }
         }
 
+        // update the root node to see whether they still don't have parent
+        // some of the session maybe slower than the other, so after a while
+        // the session complete and now the node might have parent and become 
+        // not a root node anymore
         protected bool update()
         {
             lock (syncObject)

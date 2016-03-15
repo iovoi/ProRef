@@ -23,7 +23,7 @@ namespace Cello
 
         // set up domains to track
         private string[] domains = new string[2];
-        private string[] removeTypes = new string[4];
+        private string[] removeTypes = new string[5];
 
         // the wood to construct the trees
         //private Woods sessionWoods = new Woods();
@@ -61,6 +61,7 @@ namespace Cello
             removeTypes[1] = "png";
             removeTypes[2] = "jpeg";
             removeTypes[3] = "gif";
+            removeTypes[4] = "ico";
 
             // set fiddler core configuration
             proxy_config = (proxy_config | FiddlerCoreStartupFlags.DecryptSSL);
@@ -172,9 +173,19 @@ namespace Cello
             //mainForm.WriteLine("requestHeaders.tostring(): " + oSession.RequestHeaders.ToString());
             //mainForm.WriteLine("osession.url: " + oSession.url);
             //mainForm.WriteLine("request.headers.tostring(): " + oSession.oRequest.headers.ToString());
-
+            //mainForm.WriteLine("oSession.RequestBody(): " + oSession.RequestBody.ToString());
+            oSession.utilDecodeRequest();
+            oSession.utilDecodeResponse();
+            //mainForm.WriteLine("oSession.RequestBody(): " + System.Text.Encoding.UTF8.GetString(oSession.RequestBody));
+            //mainForm.WriteLine("oSession.RequestBody(): " + oSession.GetRequestBodyAsString());
+            //mainForm.WriteLine("oSession.ResponseBody(): " + System.Text.Encoding.UTF8.GetString(oSession.ResponseBody));
+            //mainForm.WriteLine("oSession.ResponseBody(): " + oSession.GetResponseBodyAsString());
+            
             // construct the woods from completed sessions
-            SessionWoods.add(oSession);
+            //SessionWoods.add(oSession);
+            // add the non-filtered sessions to our tree
+            if (!shouldOmit(oSession))
+                SessionWoods.add(oSession);
 
             //Session p = GetSessionParent(oSession);
             //mainForm.Add2TreeView(p, oSession);
@@ -208,7 +219,8 @@ namespace Cello
         protected bool shouldOmit(Session s)
         {
             if (s.url.EndsWith("." + removeTypes[0]) || s.url.EndsWith("." + removeTypes[1])
-                || s.url.EndsWith("." + removeTypes[2]) || s.url.EndsWith("." + removeTypes[3])) 
+                || s.url.EndsWith("." + removeTypes[2]) || s.url.EndsWith("." + removeTypes[3])
+                || s.url.EndsWith("." + removeTypes[4])) 
             {
                 return true;
             }
@@ -220,7 +232,8 @@ namespace Cello
                 (s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[0])
                 || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[1])
                 || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[2])
-                || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[3])))
+                || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[3])
+                || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + "x-icon")))
             {
                 return true;
             }

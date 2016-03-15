@@ -74,14 +74,16 @@ namespace Cello
                         if (null == sDict || null == nDict || null == rDict)
                             throw new ArgumentException("argument error");
 
-                        Queue<int> traverseQueue = new Queue<int>(rDict.Keys.ToList());
+                        //Queue<int> traverseQueue = new Queue<int>(rDict.Keys.ToList());
+                        Queue<int> traverseQueue = new Queue<int>(proxy.SessionWoods.Roots.Keys.ToList());
                         treeView1.Nodes.Clear();
                         TreeNodeCollection current = treeView1.Nodes;
                         Queue<TreeNode> treeViewNodeQueue = new Queue<TreeNode>();
                         int node_i = 0;
                         foreach (int n in traverseQueue)
                         {
-                            current.Add(sDict[n].id.ToString() + ": " + sDict[n].RequestMethod + " " + sDict[n].fullUrl);
+                            //current.Add(sDict[n].id.ToString() + ": " + sDict[n].RequestMethod + " " + sDict[n].fullUrl);
+                            current.Add(proxy.SessionWoods.SessionDict[n].id.ToString() + ": " +proxy.SessionWoods.SessionDict[n].RequestMethod + " " +proxy.SessionWoods.SessionDict[n].fullUrl);
                             treeViewNodeQueue.Enqueue(current[node_i]);
                             node_i++;
                         }
@@ -92,9 +94,13 @@ namespace Cello
                             TreeNode t = treeViewNodeQueue.Dequeue();
                             current = t.Nodes;
                             node_i = 0;
-                            foreach (Node n in nDict[head].Children)
+                            //foreach (Node n in nDict[head].Children)
+                            //foreach (Node n in proxy.SessionWoods.NodeDict[head].Children)
+                            List<Node> childList = new List<Node>(proxy.SessionWoods.NodeDict[head].Children);
+                            foreach (Node n in childList)
                             {
-                                current.Add(sDict[n.ID].id.ToString() + ": " + sDict[n.ID].RequestMethod + " " + sDict[n.ID].fullUrl);
+                                //current.Add(sDict[n.ID].id.ToString() + ": " + sDict[n.ID].RequestMethod + " " + sDict[n.ID].fullUrl);
+                                current.Add(proxy.SessionWoods.SessionDict[n.ID].id.ToString() + ": " + proxy.SessionWoods.SessionDict[n.ID].RequestMethod + " " + proxy.SessionWoods.SessionDict[n.ID].fullUrl);
                                 traverseQueue.Enqueue(n.ID);
                                 treeViewNodeQueue.Enqueue(current[node_i]);
                                 node_i++;
