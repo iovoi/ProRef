@@ -46,6 +46,8 @@ namespace Cello
             }
         }
 
+        public List<Session> request_chain;
+
         public Proxy(MainForm form)
         {
             mainForm = form;

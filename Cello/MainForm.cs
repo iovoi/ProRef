@@ -28,6 +28,8 @@ namespace Cello
             {
                 proxy = new Proxy(this);
             }
+
+            treeView1.NodeMouseDoubleClick += write2file_OnDoubleClick;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -56,7 +58,8 @@ namespace Cello
                 return false;
         }
 
-        public bool Add2TreeView(SortedDictionary<int, Session> sessionDict, SortedDictionary<int, Node> nodeDict, SortedList<int, int> roots)
+        public bool Add2TreeView(SortedDictionary<int, Session> sessionDict, 
+            SortedDictionary<int, Node> nodeDict, SortedList<int, int> roots)
         {
             if (this.Created)
             {
@@ -64,7 +67,8 @@ namespace Cello
                 Debug.Assert(null != sessionDict && null != nodeDict && null != roots);
                 Object[] param = new Object[3] { sessionDict, nodeDict, roots };
 
-                Action<SortedDictionary<int, Session>, SortedDictionary<int, Node>, SortedList<int, int>> action = (sD, nD, r) =>
+                Action<SortedDictionary<int, Session>, SortedDictionary<int, Node>, 
+                    SortedList<int, int>> action = (sD, nD, r) =>
                 {
                     try
                     {
@@ -83,7 +87,10 @@ namespace Cello
                         foreach (int n in traverseQueue)
                         {
                             //current.Add(sDict[n].id.ToString() + ": " + sDict[n].RequestMethod + " " + sDict[n].fullUrl);
-                            current.Add(proxy.SessionWoods.SessionDict[n].id.ToString() + ": " +proxy.SessionWoods.SessionDict[n].RequestMethod + " " +proxy.SessionWoods.SessionDict[n].fullUrl);
+                            current.Add(proxy.SessionWoods.SessionDict[n].id.ToString() + ": " 
+                                + proxy.SessionWoods.SessionDict[n].RequestMethod + " " +proxy.SessionWoods.SessionDict[n].fullUrl);
+                            // set the id of the session the treeViewItem representing
+                            current[node_i].Name = n.ToString();
                             treeViewNodeQueue.Enqueue(current[node_i]);
                             node_i++;
                         }
@@ -100,7 +107,10 @@ namespace Cello
                             foreach (Node n in childList)
                             {
                                 //current.Add(sDict[n.ID].id.ToString() + ": " + sDict[n.ID].RequestMethod + " " + sDict[n.ID].fullUrl);
-                                current.Add(proxy.SessionWoods.SessionDict[n.ID].id.ToString() + ": " + proxy.SessionWoods.SessionDict[n.ID].RequestMethod + " " + proxy.SessionWoods.SessionDict[n.ID].fullUrl);
+                                current.Add(proxy.SessionWoods.SessionDict[n.ID].id.ToString() + ": " 
+                                    + proxy.SessionWoods.SessionDict[n.ID].RequestMethod + " " + proxy.SessionWoods.SessionDict[n.ID].fullUrl);
+                                // set the id of the session the treeViewItem representing
+                                current[node_i].Name = n.ID.ToString();
                                 traverseQueue.Enqueue(n.ID);
                                 treeViewNodeQueue.Enqueue(current[node_i]);
                                 node_i++;
@@ -130,6 +140,40 @@ namespace Cello
         public void alert_message(string s)
         {
             MessageBox.Show(s);
+        }
+
+        public void write2file_OnDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (MouseButtons.Right == e.Button)
+            {
+                /*TreeView tv = sender as TreeView;
+                using (System.IO.StreamWriter file
+                    = new System.IO.StreamWriter(
+                        "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\" 
+                        + DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt"))
+                {
+                    //file.WriteLine(e.Node.Name);
+                    int root_id;
+                    if (Int32.TryParse(e.Node.Name, out root_id))
+                    {
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Node ID invalid");
+                    }
+                }*/
+                int root_id;
+                if (Int32.TryParse(e.Node.Name, out root_id))
+                {
+                    Session rootSession = proxy.SessionWoods.SessionDict[root_id];
+                    rootSession.SaveSession("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                        + DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt", false);
+                }
+                else
+                {
+                    throw new ArgumentException("Node ID invalid");
+                }
+           }
         }
     }
 }
