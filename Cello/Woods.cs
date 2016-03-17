@@ -125,7 +125,7 @@ namespace Cello
         //           (the nearest session, one and only one, whose address is exactly matched).
         //           If not 302 response, then find the sessions who has referer header 
         //           and whose referer header address match current address
-        protected Node get_parent(Session s)
+        public Node get_parent(Session s)
         {
             lock (syncObject)
             {

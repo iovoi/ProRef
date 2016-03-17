@@ -146,33 +146,73 @@ namespace Cello
         {
             if (MouseButtons.Right == e.Button)
             {
-                /*TreeView tv = sender as TreeView;
-                using (System.IO.StreamWriter file
-                    = new System.IO.StreamWriter(
-                        "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\" 
-                        + DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt"))
+                Action action = delegate()
                 {
-                    //file.WriteLine(e.Node.Name);
-                    int root_id;
-                    if (Int32.TryParse(e.Node.Name, out root_id))
+                    /*//TreeView tv = sender as TreeView;
+                    using (System.IO.StreamWriter file
+                        = new System.IO.StreamWriter(
+                            "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\" 
+                            + DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt"))
                     {
+                        //file.WriteLine(e.Node.Name);
+                        int root_id;
+                        if (Int32.TryParse(e.Node.Name, out root_id))
+                        {
+                            Session rootSession = proxy.SessionWoods.SessionDict[root_id];
+                            rootSession.SaveSession("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                                + DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt", false);
+                        }
+                        else
+                        {
+                            throw new ArgumentException("Node ID invalid");
+                        }
+                    }*/
+                    proxy.request_chain = new List<Session>();
+                    int session_id;
+                    if (Int32.TryParse(e.Node.Name, out session_id))
+                    {
+                        Node node = proxy.SessionWoods.NodeDict[session_id];
+                        Session session = proxy.SessionWoods.SessionDict[session_id];
+                        //WriteLine(node.ID.ToString());
+                        while (null != node)
+                        {
+                            proxy.request_chain.Insert(0, session);
+                            node = proxy.SessionWoods.get_parent(session);
+                            if (null != node)
+                            {
+                                session = proxy.SessionWoods.SessionDict[node.ID];
+                                //WriteLine(node.ID.ToString());
+                            }
+                        }
                     }
                     else
                     {
                         throw new ArgumentException("Node ID invalid");
                     }
-                }*/
-                int root_id;
-                if (Int32.TryParse(e.Node.Name, out root_id))
-                {
-                    Session rootSession = proxy.SessionWoods.SessionDict[root_id];
-                    rootSession.SaveSession("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
-                        + DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt", false);
-                }
-                else
-                {
-                    throw new ArgumentException("Node ID invalid");
-                }
+
+                    string file2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                            + DateTime.Now.ToString("yyyyMMddHHmmss"); 
+                    int num = 0;
+                    foreach (Session s in proxy.request_chain)
+                    {
+                        //s.SaveSession(file2Write + num.ToString() + ".txt", false);
+                        //s.SaveRequest(file2Write + num.ToString() + ".txt" , false);
+                        /*WriteLine("s.oRequest.host: " + s.oRequest.host);
+                        WriteLine("s.host: " + s.host);
+                        WriteLine("s.hostname: " + s.hostname);
+                        WriteLine("s.RequestMethod: " + s.RequestMethod);
+                        WriteLine("s.port: " + s.port);
+                        WriteLine("s.fullUrl: " + s.fullUrl);
+                        WriteLine("s.RequestHeaders.HTTPVersion: " + s.RequestHeaders.HTTPVersion);
+                        foreach (HTTPHeaderItem httpHeaderItem in s.RequestHeaders)
+                            WriteLine("httpHeaderItem.Name: " + httpHeaderItem.Name);*/
+                        s.SaveRequest(file2Write + num.ToString() + ".txt" , false, true);
+                        num++;
+                        //WriteLine("writing s to file");
+                    }
+                    //proxy.MakeRequest();
+                };
+                BeginInvoke(action);
            }
         }
     }

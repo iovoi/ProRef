@@ -7,6 +7,9 @@ using Fiddler;
 //using System.Security.Cryptography.X509Certificates;
 using System.Collections;
 using System.Diagnostics;
+using System.Net;
+using System.IO;
+using System.IO.Compression;
 
 namespace Cello
 {
@@ -23,7 +26,7 @@ namespace Cello
 
         // set up domains to track
         private string[] domains = new string[2];
-        private string[] removeTypes = new string[5];
+        private string[] removeTypes = new string[6];
 
         // the wood to construct the trees
         //private Woods sessionWoods = new Woods();
@@ -64,6 +67,8 @@ namespace Cello
             removeTypes[2] = "jpeg";
             removeTypes[3] = "gif";
             removeTypes[4] = "ico";
+            // also remove css file
+            removeTypes[5] = "css";
 
             // set fiddler core configuration
             proxy_config = (proxy_config | FiddlerCoreStartupFlags.DecryptSSL);
@@ -222,7 +227,7 @@ namespace Cello
         {
             if (s.url.EndsWith("." + removeTypes[0]) || s.url.EndsWith("." + removeTypes[1])
                 || s.url.EndsWith("." + removeTypes[2]) || s.url.EndsWith("." + removeTypes[3])
-                || s.url.EndsWith("." + removeTypes[4])) 
+                || s.url.EndsWith("." + removeTypes[4]) || s.url.EndsWith("." + removeTypes[5])) 
             {
                 return true;
             }
@@ -235,11 +240,84 @@ namespace Cello
                 || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[1])
                 || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[2])
                 || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[3])
-                || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + "x-icon")))
+                || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + "x-icon"))
+                || s.oResponse.headers.ExistsAndEquals("content-type", "text/" + removeTypes[5]))
             {
                 return true;
             }
             return false;
+        }
+
+        public void MakeRequest()
+        {
+            HttpWebResponse response;
+            string responseText;
+
+            if (FireRequest(out response))
+            {
+                responseText = ReadResponse(response);
+                mainForm.WriteLine(responseText);
+                response.Close();
+            }
+        }
+
+        public bool FireRequest(out HttpWebResponse res)
+        {
+            res = null;
+
+            try
+            {
+                // Create request to URL
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://www.facebook.com/");
+
+                // Set request headers
+                request.Accept = "text/html, application/xhtml+xml, */*";
+                request.Headers.Set(HttpRequestHeader.AcceptLanguage, "en-SG");
+                request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko";
+                request.Headers.Set(HttpRequestHeader.AcceptEncoding, "gzip, deflate");
+                request.Headers.Add("DNT", @"1");
+
+                //Get response to request.
+                res = (HttpWebResponse)request.GetResponse();
+
+            }
+            catch (WebException e)
+            {
+                // ProtocolError indicates a valid HTTP response, but with a non-200 status code (e.g. 304 Not Modified, 404 Not Found)
+                if (WebExceptionStatus.ProtocolError == e.Status)
+                    res = (HttpWebResponse)e.Response;
+                else
+                    return false;
+            }
+            catch (Exception e)
+            {
+                if (null != res)
+                    res.Close();
+                return false;
+            }
+
+            return true;
+        }
+
+        public string ReadResponse(HttpWebResponse res)
+        {
+            using (Stream responseStream = res.GetResponseStream())
+            {
+                Stream stream2Read = responseStream;
+                if (res.ContentEncoding.ToLower().Contains("gzip"))
+                {
+                    stream2Read = new GZipStream(stream2Read, CompressionMode.Decompress);
+                }
+                else if (res.ContentEncoding.ToLower().Contains("deflate"))
+                {
+                    stream2Read = new DeflateStream(stream2Read, CompressionMode.Decompress);
+                }
+
+                using (StreamReader streamReader = new StreamReader(stream2Read, Encoding.UTF8))
+                {
+                    return streamReader.ReadToEnd();
+                }
+            }
         }
     }
 }
