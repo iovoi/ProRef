@@ -151,7 +151,7 @@ namespace Cello
             Debug.Assert(null != SessionWoods);
 
             //mainForm.WriteLine(oSession.ToString());
-            string referer = "null";
+            /*string referer = "null";
             if (!oSession.RequestMethod.Equals("CONNECT"))
             {
                 if (null != oSession.oRequest.headers)
@@ -169,7 +169,7 @@ namespace Cello
             else
             {
                 referer = "CONNECT";
-            }
+            }*/
 
             //mainForm.WriteLine(oSession.id.ToString() + ": " + referer);
             //mainForm.WriteLine(oSession.id.ToString() + ": " + oSession.ToString());
@@ -225,16 +225,27 @@ namespace Cello
 
         protected bool shouldOmit(Session s)
         {
+            // filtering out the CONNECT messages
+            if (s.RequestMethod.Equals("CONNECT"))
+            {
+                return true;
+            }
+
+            // filtering out the external request to unrelted websites
+            if (!(s.url.Contains(domains[0]) || s.url.Contains(domains[1])))
+            {
+                return true;
+            }
+
+            // filtering out the useless files such as image or css files
             if (s.url.EndsWith("." + removeTypes[0]) || s.url.EndsWith("." + removeTypes[1])
                 || s.url.EndsWith("." + removeTypes[2]) || s.url.EndsWith("." + removeTypes[3])
                 || s.url.EndsWith("." + removeTypes[4]) || s.url.EndsWith("." + removeTypes[5])) 
             {
                 return true;
             }
-            if (!(s.url.Contains(domains[0]) || s.url.Contains(domains[1])))
-            {
-                return true;
-            }
+
+            // filtering out the useless files such as imgaes
             if (null != s.oResponse && null != s.oResponse.headers &&
                 (s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[0])
                 || s.oResponse.headers.ExistsAndEquals("content-type", "image/" + removeTypes[1])
@@ -245,6 +256,7 @@ namespace Cello
             {
                 return true;
             }
+
             return false;
         }
 

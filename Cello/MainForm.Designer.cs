@@ -114,6 +114,7 @@
             // 
             // treeView1
             // 
+            this.treeView1.AccessibleDescription = "";
             this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeView1.Location = new System.Drawing.Point(3, 3);
             this.treeView1.Name = "treeView1";

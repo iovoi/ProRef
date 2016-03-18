@@ -10,6 +10,8 @@ using System.Windows.Forms;
 //==================================
 using Fiddler;
 using System.Diagnostics;
+using System.Threading;
+using System.Runtime.Remoting.Messaging;
 //==================================
 
 namespace Cello
@@ -58,6 +60,8 @@ namespace Cello
                 return false;
         }
 
+        //public delegate void updateTree(SortedDictionary<int, Session> sD, SortedDictionary<int, Node> nD, SortedList<int, int> r, ref TreeView treeView1); 
+
         public bool Add2TreeView(SortedDictionary<int, Session> sessionDict, 
             SortedDictionary<int, Node> nodeDict, SortedList<int, int> roots)
         {
@@ -69,6 +73,7 @@ namespace Cello
 
                 Action<SortedDictionary<int, Session>, SortedDictionary<int, Node>, 
                     SortedList<int, int>> action = (sD, nD, r) =>
+                //updateTree action = (SortedDictionary<int, Session> sD, SortedDictionary<int, Node> nD, SortedList<int, int> r, ref TreeView treeView1) =>
                 {
                     try
                     {
@@ -124,6 +129,7 @@ namespace Cello
                     }
                 };
                 BeginInvoke(action, sessionDict, nodeDict, roots);
+                //IAsyncResult result = action.BeginInvoke(sessionDict, nodeDict, roots, ref this.treeView1, new AsyncCallback(Add2TreeView_AsyncCallBack), null);
 
                 return true;
             }
@@ -215,5 +221,12 @@ namespace Cello
                 BeginInvoke(action);
            }
         }
+
+        /*public void Add2TreeView_AsyncCallBack(IAsyncResult iar)
+        {
+            AsyncResult result = (AsyncResult)iar;
+            updateTree caller = (updateTree)result.AsyncDelegate;
+            caller.EndInvoke(ref this.treeView1, result);
+        }*/
     }
 }
