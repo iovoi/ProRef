@@ -181,8 +181,11 @@ namespace Cello
             //mainForm.WriteLine("osession.url: " + oSession.url);
             //mainForm.WriteLine("request.headers.tostring(): " + oSession.oRequest.headers.ToString());
             //mainForm.WriteLine("oSession.RequestBody(): " + oSession.RequestBody.ToString());
+            
+            // decode request and response
             oSession.utilDecodeRequest();
             oSession.utilDecodeResponse();
+
             //mainForm.WriteLine("oSession.RequestBody(): " + System.Text.Encoding.UTF8.GetString(oSession.RequestBody));
             //mainForm.WriteLine("oSession.RequestBody(): " + oSession.GetRequestBodyAsString());
             //mainForm.WriteLine("oSession.ResponseBody(): " + System.Text.Encoding.UTF8.GetString(oSession.ResponseBody));

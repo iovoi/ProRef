@@ -21,5 +21,27 @@ namespace Cello
         {
 
         }
+
+        public bool WriteLine(string s)
+        {
+            if (this.Created)
+            {
+                BeginInvoke((Action<string>)((str) =>
+                    {
+                        try
+                        {
+                            OutputTextBox.AppendText(str + "\r\n");
+                        }
+                        catch (Exception e)
+                        {
+                            MessageBox.Show(e.ToString());
+                        }
+                    }), s);
+                return true;
+            }
+            else
+                return false;
+        }
+
     }
 }
