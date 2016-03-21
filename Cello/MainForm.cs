@@ -174,6 +174,7 @@ namespace Cello
                         }
                     }*/
                     proxy.request_chain = new List<Session>();
+                    List<int> request_session_ids = new List<int>();
                     int session_id;
                     if (Int32.TryParse(e.Node.Name, out session_id))
                     {
@@ -183,6 +184,7 @@ namespace Cello
                         while (null != node)
                         {
                             proxy.request_chain.Insert(0, session);
+                            request_session_ids.Insert(0, node.ID);
                             node = proxy.SessionWoods.get_parent(session);
                             if (null != node)
                             {
@@ -196,8 +198,10 @@ namespace Cello
                         throw new ArgumentException("Node ID invalid");
                     }
 
-                    string file2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
-                            + DateTime.Now.ToString("yyyyMMddHHmmss"); 
+                    string requestFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                            + "request_" + DateTime.Now.ToString("yyyyMMddHHmmss"); 
+                    string scriptFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                            + "script_" + DateTime.Now.ToString("yyyyMMddHHmmss"); 
                     int num = 0;
                     foreach (Session s in proxy.request_chain)
                     {
@@ -212,11 +216,24 @@ namespace Cello
                         WriteLine("s.RequestHeaders.HTTPVersion: " + s.RequestHeaders.HTTPVersion);
                         foreach (HTTPHeaderItem httpHeaderItem in s.RequestHeaders)
                             WriteLine("httpHeaderItem.Name: " + httpHeaderItem.Name);*/
-                        s.SaveRequest(file2Write + num.ToString() + ".txt" , false, true);
+                        s.SaveRequest(requestFile2Write + num.ToString() + ".txt" , false, true);
                         num++;
                         //WriteLine("writing s to file");
                     }
                     //proxy.MakeRequest();
+                    for (int req_i = 0; req_i < request_session_ids.Count() - 1; req_i++)
+                    {
+                        Node cur = proxy.SessionWoods.NodeDict[request_session_ids[req_i]];
+                        List<Node> children_list = cur.Children;
+                        foreach (Node cur_node in children_list)
+                        {
+                            if (cur_node.ID != request_session_ids[req_i])
+                            {
+                                proxy.SessionWoods.SessionDict[cur_node.ID].SaveSession(scriptFile2Write + proxy.SessionWoods.SessionDict[cur_node.ID].fullUrl.Replace("?", "/").Split(new char [] {'/'}).Last(), false);
+                                //WriteLine(proxy.SessionWoods.SessionDict[cur_node.ID].fullUrl.Replace("?", "/").Split(new char [] {'/'}).Last());
+                            }
+                        }
+                    }
                 };
                 BeginInvoke(action);
            }
