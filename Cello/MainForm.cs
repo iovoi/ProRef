@@ -18,7 +18,9 @@ namespace Cello
 {
     public partial class MainForm : Form
     {
-        private static Proxy proxy = null;
+        public static Proxy proxy = null;
+        public Form diff_Form = null;
+
         public MainForm()
         {
             InitializeComponent();
@@ -236,6 +238,9 @@ namespace Cello
                     }
                 };
                 BeginInvoke(action);
+
+                this.diff_Form = new DifferentialForm();
+                diff_Form.Show();
            }
         }
 
