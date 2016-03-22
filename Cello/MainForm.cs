@@ -176,7 +176,9 @@ namespace Cello
                         }
                     }*/
                     proxy.request_chain = new List<Session>();
-                    List<int> request_session_ids = new List<int>();
+                    proxy.page_sessionID_chain = new List<int>();
+                    //List<int> request_session_ids = new List<int>();
+                    List<int> request_session_ids = proxy.page_sessionID_chain;
                     int session_id;
                     if (Int32.TryParse(e.Node.Name, out session_id))
                     {
@@ -239,7 +241,7 @@ namespace Cello
                 };
                 BeginInvoke(action);
 
-                this.diff_Form = new DifferentialForm();
+                this.diff_Form = new DifferentialForm(proxy);
                 diff_Form.Show();
            }
         }

@@ -50,6 +50,7 @@ namespace Cello
         }
 
         public List<Session> request_chain;
+        public List<int> page_sessionID_chain;
 
         public Proxy(MainForm form)
         {
@@ -307,7 +308,62 @@ namespace Cello
             catch (Exception e)
             {
                 if (null != res)
+                {
                     res.Close();
+                    //System.Console.WriteLine(e.StackTrace);
+                }
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool Request_www_facebook_com(out HttpWebResponse response)
+        {
+            response = null;
+
+            try
+            {
+                //Create request to URL.
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://www.facebook.com/login.php?login_attempt=1&lwv=110");
+
+                //Set request headers.
+                request.Accept = "text/html, application/xhtml+xml, */*";
+                request.Referer = "https://www.facebook.com/";
+                request.Headers.Set(HttpRequestHeader.AcceptLanguage, "en-SG");
+                request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko";
+                request.ContentType = "application/x-www-form-urlencoded";
+                request.Headers.Set(HttpRequestHeader.AcceptEncoding, "gzip, deflate");
+                request.Headers.Add("DNT", @"1");
+                request.Headers.Set(HttpRequestHeader.CacheControl, "no-cache");
+                request.Headers.Set(HttpRequestHeader.Cookie, @"_js_datr=7zbxVjb5o-oqgWo4XdJIBGpu; _js_reg_fb_ref=https%3A%2F%2Fwww.facebook.com%2F; _js_reg_fb_gate=https%3A%2F%2Fwww.facebook.com%2F");
+
+                //Set request method
+                request.Method = "POST";
+
+                // Disable 'Expect: 100-continue' behavior. More info: http://haacked.com/archive/2004/05/15/http-web-request-expect-100-continue.aspx
+                request.ServicePoint.Expect100Continue = false;
+
+                //Set request body.
+                string body = @"lsd=AVrnwsrh&email=alice.pat.tester@gmail.com&pass=patssotest1&default_persistent=0&timezone=-480&lgndim=eyJ3IjoxOTIwLCJoIjoxMDgwLCJhdyI6MTkyMCwiYWgiOjEwNDAsImMiOjI0fQ%3D%3D&lgnrnd=051335_Gm0o&lgnjs=1458648814&locale=en_US&qsstamp=W1tbNywxOSw0MCw0Myw0NCw2OCw2OSwxMTEsMTUyLDE2NywxNzIsMTc3LDE4MywyMDksMjI1LDIzMCwyMzEsMjM2LDI0NSwyNjQsMjY4LDI3MSwyODMsMzcxLDM4NiwzOTcsNDIxLDQyNSw0MzAsNDUxLDQ3Miw1MTEsNTEyLDUyNSw1NjEsNTkwLDYwMiw2MDgsNjIyLDY1Miw3MzgsNzgxXV0sIkFabGFqRG1FZWxpcGZwd25lZS1KMm51Mjd4RU1JNzBHc2tnTzI2RkhFMVp3X3FXRlkydG10SmpUV0d0Ml9YczEtQWtjSUJRcWg4dEJMV0hUcUg2elVmVFgzVC12UTg3Snl0Q0F0UnRYY3ZrbGJjdjM2bm1xN1pYcGgwVldIVmpSY01mOWE4WERvTThLLXlzb21iSUFULUIxWGNKRV96akdnZnJLZGdBVnNyWEp6OHVvVnVfNUZDNW1tV0JXMmVrdUh2MjNRUGdhNU53TURKZWw4Q2hYRHVVOXQ3SVRweXlFTDVuU3VmOEk1TGQ3RGciXQ%3D%3D";
+                byte[] postBytes = System.Text.Encoding.UTF8.GetBytes(body);
+                request.ContentLength = postBytes.Length;
+                Stream stream = request.GetRequestStream();
+                stream.Write(postBytes, 0, postBytes.Length);
+                stream.Close();
+
+                //Get response to request.
+                response = (HttpWebResponse)request.GetResponse();
+            }
+            catch (WebException e)
+            {
+                //ProtocolError indicates a valid HTTP response, but with a non-200 status code (e.g. 304 Not Modified, 404 Not Found)
+                if (e.Status == WebExceptionStatus.ProtocolError) response = (HttpWebResponse)e.Response;
+                else return false;
+            }
+            catch (Exception)
+            {
+                if (response != null) response.Close();
                 return false;
             }
 
