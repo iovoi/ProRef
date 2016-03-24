@@ -99,7 +99,9 @@ namespace Cello
             foreach (int session_id in reversed_page_sessionID_chain)
             {
                 // ToDo:
-                RequestDetails current_request = new RequestDetails(proxy.SessionWoods.SessionDict[session_id]);
+                RequestDetails current_request_details = new RequestDetails(proxy.SessionWoods.SessionDict[session_id]);
+                DifferentialRequest current_differentialRequest = new DifferentialRequest(current_request_details);
+                current_differentialRequest.Fire_differential_request(this);
             }
             return "Refinement finished...";
         }

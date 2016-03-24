@@ -243,7 +243,43 @@ namespace Cello
 
                 this.diff_Form = new DifferentialForm(proxy);
                 diff_Form.Show();
-           }
+            }
+            else if (MouseButtons.Left == e.Button)
+            {
+                Action action = delegate()
+                {
+                    proxy.request_chain = new List<Session>();
+                    proxy.page_sessionID_chain = new List<int>();
+                    List<int> request_session_ids = proxy.page_sessionID_chain;
+                    int session_id;
+                    if (Int32.TryParse(e.Node.Name, out session_id))
+                    {
+                        Node node = proxy.SessionWoods.NodeDict[session_id];
+                        Session session = proxy.SessionWoods.SessionDict[session_id];
+                        proxy.request_chain.Insert(0, session);
+                        request_session_ids.Insert(0, node.ID);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Node ID invalid");
+                    }
+
+                    string requestFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                            + "request_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    string scriptFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                            + "script_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    int num = 0;
+                    foreach (Session s in proxy.request_chain)
+                    {
+                        s.SaveSession(requestFile2Write + num.ToString() + ".txt", false);
+                        num++;
+                    }
+                };
+                BeginInvoke(action);
+
+                this.diff_Form = new DifferentialForm(proxy);
+                diff_Form.Show();
+            }
         }
 
         /*public void Add2TreeView_AsyncCallBack(IAsyncResult iar)
