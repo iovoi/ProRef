@@ -8,6 +8,9 @@ using System.Net;
 using System.Diagnostics;
 using System.Collections.Generic;
 using Fiddler;
+using System.IO;
+using System.Net;
+using System.IO.Compression;
 
 namespace Cello
 {
@@ -22,9 +25,11 @@ namespace Cello
             public Dictionary<string, string> reduced_bodyParams;
             public Dictionary<string, string> cookies;
             public Dictionary<string, string> reduced_cookies;
+            public Dictionary<string, string> remaining_cookies;
             public string requestMethod;
             public int responseCode;
             public string requestBody;
+            public Version protocolVersion;
 
             public DifferentialRequest(RequestDetails rqst_details)
             {
@@ -33,6 +38,7 @@ namespace Cello
                 responseCode = rqst_details.responseCode;
                 requestMethod = rqst_details.request_method;
                 requestBody = rqst_details.request_body;
+                protocolVersion = rqst_details.session.RequestHeaders.HTTPVersion.Contains("1.1")? HttpVersion.Version11 : HttpVersion.Version10;
                 if (null != requestBody && ! "".Equals(requestBody))
                 {
                     bodyParams = new Dictionary<string, string>();
@@ -52,13 +58,20 @@ namespace Cello
             {
                 Debug.Assert(null != requestDetials);
 
+                // we just need to handle cookies and/or some headers in GET request
                 if ("GET".Equals(requestMethod))
                 {
                     Diff_GET(form);
                 }
+                // in a case of POST, we need to also handle body parameters, cookies and/or other headers
                 else if ("POST".Equals(requestMethod))
                 {
-
+                    Diff_POST(form);
+                }
+                // and/or other request method to be implemented
+                else
+                {
+                    //other request methods
                 }
             }
 
@@ -66,15 +79,20 @@ namespace Cello
             {
                 int cookies_final_count = 0;
                 reduced_cookies = new Dictionary<string, string>();
+                remaining_cookies = new Dictionary<string, string>();
                 if (null != cookies)
                 {
                     while (cookies_final_count != cookies.Count)
                     {
                         KeyValuePair<string, string> cookie_name_value = cookies.Last();
                         cookies.Remove(cookies.Last().Key);
+
                         HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(requestDetials.fullUrl);
+
                         httpRequest.Method = "GET";
+
                         httpRequest.ProtocolVersion = requestDetials.session.RequestHeaders.HTTPVersion.Contains("1.1")? HttpVersion.Version11 : HttpVersion.Version10;
+
                         foreach (HTTPHeaderItem httpHeaderItem in headers)
                         {
                             // please refer to https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.headers(v=vs.110).aspx
@@ -112,6 +130,7 @@ namespace Cello
 
                             if ("Date".Equals(httpHeaderItem.Name))
                             {
+                                // not implemented yet
                                 //httpRequest.Date = 
                                 continue;
                             }
@@ -124,12 +143,14 @@ namespace Cello
 
                             if ("If-Modified-Since".Equals(httpHeaderItem.Name))
                             {
+                                // not implemented yet
                                 //httpRequest.IfModifiedSince = 
                                 continue;
                             }
 
                             if ("Range".Equals(httpHeaderItem.Name))
                             {
+                                // not implemented yet
                                 //httpRequest.AddRange = 
                                 continue;
                             }
@@ -160,19 +181,77 @@ namespace Cello
                             }
                             else
                             {
-                                (form as DifferentialForm).WriteLine("cookies: " + httpHeaderItem.Name + ": " + httpHeaderItem.Value);
+                                //(form as DifferentialForm).WriteLine("cookies: " + httpHeaderItem.Name + ": " + httpHeaderItem.Value);
                                 continue;
                             }
                         }
+                        int cookieIndex = 0;
                         foreach (KeyValuePair<string, string> cookie in cookies)
                         {
-                            httpRequest.Headers["Cookie"] = cookie.Key + "=" + cookie.Value + "; ";
-                            (form as DifferentialForm).WriteLine("cookies: " + cookie.Key + ": " + cookie.Value);
+                            if (0 == cookieIndex)
+                            {
+                                httpRequest.Headers["Cookie"] = cookie.Key + "=" + cookie.Value;
+                            }
+                            else
+                            {
+                                httpRequest.Headers["Cookie"] += ";" + cookie.Key + "=" + cookie.Value;
+                            }
+                            cookieIndex++;
+                        }
+
+                        foreach (KeyValuePair<string, string> remaining_cookie in remaining_cookies)
+                        {
+                            if (0 == cookieIndex)
+                            {
+                                httpRequest.Headers["Cookie"] = remaining_cookie.Key + "=" + remaining_cookie.Value;
+                            }
+                            else
+                            {
+                                httpRequest.Headers["Cookie"] += ";" + remaining_cookie.Key + "=" + remaining_cookie.Value;
+                            }
+                            cookieIndex++;
+                        }
+
+                        if (null != httpRequest.Headers["Cookie"])
+                        {
+                            (form as DifferentialForm).WriteLine(httpRequest.Headers["Cookie"].ToString());
+                        }
+                        else
+                        {
+                            (form as DifferentialForm).WriteLine("cookies null");
                         }
                         try
                         {
                             //(form as DifferentialForm).WriteLine(client.DownloadString(requestDetials.fullUrl));
-                            httpRequest.GetResponse().Close();
+                            //httpRequest.GetResponse().Close();
+                            using (HttpWebResponse httpWebResponse = (HttpWebResponse)httpRequest.GetResponse())
+                            using (Stream stream = httpWebResponse.GetResponseStream())
+                            {
+                                Stream responseStream = stream;
+                                if (httpWebResponse.ContentEncoding.ToLower().Contains("gzip"))
+                                {
+                                    responseStream = new GZipStream(stream, CompressionMode.Decompress);
+                                }
+                                else if (httpWebResponse.ContentEncoding.ToLower().Contains("deflate"))
+                                {
+                                    responseStream = new DeflateStream(stream, CompressionMode.Decompress);
+                                }
+
+                                using (StreamReader responseReader = new StreamReader(responseStream))
+                                {
+                                    string responseString = responseReader.ReadToEnd();
+                                    //responseString = System.Text.Encoding.UTF8.GetString(responseString);
+                                    //(form as DifferentialForm).WriteLine(responseString);
+                                    if (IsSameResponse(httpWebResponse, responseString, form))
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        remaining_cookies.Add(cookie_name_value.Key, cookie_name_value.Value);
+                                    }
+                                }
+                            }
                         }
                         catch (WebException we)
                         {
@@ -181,6 +260,34 @@ namespace Cello
                         //ToDo: compare whether the response is different or not to determine whether the request is valid or not
                     }
                 }
+            }
+
+            public void Diff_POST(Form form)
+            {
+
+            }
+
+            public bool IsSameResponse(HttpWebResponse httpWebResponse, string htmlString, Form form)
+            {
+                if (((int)httpWebResponse.StatusCode) != this.responseCode)
+                {
+                    return false;
+                }
+                
+                if (httpWebResponse.ProtocolVersion != protocolVersion)
+                {
+                    return false;
+                }
+
+                foreach (string header in httpWebResponse.Headers)
+                {
+                    // content-length is out of our consideration because
+                    // response content-length might be different everytime
+                    // also not consider two specific headers: 
+                    // content-encoding and transfer-encoding
+                    (form as DifferentialForm).WriteLine("Headers: " + header);
+                }
+                return true;
             }
         }
     }
