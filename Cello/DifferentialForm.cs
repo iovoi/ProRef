@@ -84,6 +84,7 @@ namespace Cello
         {
             BackgroundWorker backgroundWorker = sender as BackgroundWorker;
             Proxy proxy = (Proxy)e.Argument;
+            WriteLine("Fuzzing started...");
             e.Result = RefineTraces(backgroundWorker, proxy);
 
             if (backgroundWorker.CancellationPending)
@@ -100,9 +101,18 @@ namespace Cello
             {
                 // ToDo:
                 RequestDetails current_request_details = new RequestDetails(proxy.SessionWoods.SessionDict[session_id]);
-                DifferentialRequest current_differentialRequest = new DifferentialRequest(current_request_details);
-                current_differentialRequest.Fire_differential_request(this);
+                DifferentialRequest current_differentialRequest = new DifferentialRequest(current_request_details, this);
+                current_differentialRequest.Fire_differential_request();
+
+                using (System.IO.StreamWriter file = 
+                    new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\refine_" 
+                        + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + session_id)
+                {
+                    proxy.SessionWoods.SessionDict[session_id].WriteRequestToStream(false, true, true, file);
+                }
             }
+
+
             return "Refinement finished...";
         }
 
