@@ -27,6 +27,7 @@ namespace Cello
             public Dictionary<string, string> cookies;
             //public Dictionary<string, string> reduced_cookies;
             public Dictionary<string, string> remaining_cookies;
+            public string url;
             public string requestMethod;
             public int responseCode;
             public string requestBody;
@@ -43,6 +44,7 @@ namespace Cello
                 requestMethod = rqst_details.request_method;
                 requestBody = rqst_details.request_body;
                 protocolVersion = rqst_details.session.RequestHeaders.HTTPVersion.Contains("1.1")? HttpVersion.Version11 : HttpVersion.Version10;
+                url = rqst_details.fullUrl;
                 if (null != requestBody && ! "".Equals(requestBody))
                 {
                     bodyParams = new Dictionary<string, string>();
@@ -325,6 +327,7 @@ namespace Cello
                                     }
                                 }
                             }
+                            form.WriteLine("remaining cookie count: " + remaining_cookies.Count);
                         }
                         catch (WebException we)
                         {
@@ -431,6 +434,8 @@ namespace Cello
                                     }
                                 }
                             }
+
+                            form.WriteLine("remaining body param count: " + remaining_bodyParam.Count);
                         }
                         catch (WebException we)
                         {
@@ -488,6 +493,8 @@ namespace Cello
                                     }
                                 }
                             }
+
+                            form.WriteLine("remaining cookies count: " + remaining_cookies.Count);
                         }
                         catch (WebException we)
                         {
@@ -795,30 +802,36 @@ namespace Cello
                     }
                 }
                 int cookieIndex = 0;
-                foreach (KeyValuePair<string, string> cookie in cookies)
+                if (null != cookies)
                 {
-                    if (0 == cookieIndex)
+                    foreach (KeyValuePair<string, string> cookie in cookies)
                     {
-                        httpRequest.Headers["Cookie"] = cookie.Key + "=" + cookie.Value;
+                        if (0 == cookieIndex)
+                        {
+                            httpRequest.Headers["Cookie"] = cookie.Key + "=" + cookie.Value;
+                        }
+                        else
+                        {
+                            httpRequest.Headers["Cookie"] += ";" + cookie.Key + "=" + cookie.Value;
+                        }
+                        cookieIndex++;
                     }
-                    else
-                    {
-                        httpRequest.Headers["Cookie"] += ";" + cookie.Key + "=" + cookie.Value;
-                    }
-                    cookieIndex++;
                 }
 
-                foreach (KeyValuePair<string, string> remaining_cookie in remaining_cookies)
+                if (null != remaining_cookies)
                 {
-                    if (0 == cookieIndex)
+                    foreach (KeyValuePair<string, string> remaining_cookie in remaining_cookies)
                     {
-                        httpRequest.Headers["Cookie"] = remaining_cookie.Key + "=" + remaining_cookie.Value;
+                        if (0 == cookieIndex)
+                        {
+                            httpRequest.Headers["Cookie"] = remaining_cookie.Key + "=" + remaining_cookie.Value;
+                        }
+                        else
+                        {
+                            httpRequest.Headers["Cookie"] += ";" + remaining_cookie.Key + "=" + remaining_cookie.Value;
+                        }
+                        cookieIndex++;
                     }
-                    else
-                    {
-                        httpRequest.Headers["Cookie"] += ";" + remaining_cookie.Key + "=" + remaining_cookie.Value;
-                    }
-                    cookieIndex++;
                 }
 
                 if (null != httpRequest.Headers["Cookie"])
@@ -907,10 +920,23 @@ namespace Cello
                     // and give up finding the same cookie name from response of session object
                 }
 
-                foreach (KeyValuePair<string, string> cookiePair in originResponseCookies)
+                /*foreach (KeyValuePair<string, string> cookiePair in originResponseCookies)
                 {
                     string value;
                     if (responseCookiesDict.TryGetValue(cookiePair.Key, out value))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }*/
+
+                foreach (KeyValuePair<string, string> cookiePair in responseCookiesDict)
+                {
+                    string value;
+                    if (originResponseCookies.TryGetValue(cookiePair.Key, out value))
                     {
                         continue;
                     }
@@ -975,6 +1001,9 @@ namespace Cello
                 double threshold = 0.01;
                 return threshold > Math.Abs(originLength - newLength) / originLength;
             }
+            
+            // ToDo:
+            // 1. improve the same response algorithm; 2. implement the url parameter differentiation; 3. think how to use Match.size;
         }
     }
 }

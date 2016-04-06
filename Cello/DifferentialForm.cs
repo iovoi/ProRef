@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Cello.Utils;
+using Fiddler;
 
 namespace Cello
 {
@@ -104,11 +105,72 @@ namespace Cello
                 DifferentialRequest current_differentialRequest = new DifferentialRequest(current_request_details, this);
                 current_differentialRequest.Fire_differential_request();
 
+                SessionData session2write = new SessionData(proxy.SessionWoods.SessionDict[session_id]);
+
                 using (System.IO.StreamWriter file = 
                     new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\refine_" 
-                        + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + session_id)
+                        + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + session_id + ".txt"))
                 {
-                    proxy.SessionWoods.SessionDict[session_id].WriteRequestToStream(false, true, true, file);
+                    //proxy.SessionWoods.SessionDict[session_id].WriteRequestToStream(false, true, true, file);
+                    file.Write(System.Text.Encoding.Default.GetString(session2write.arrRequest));
+                    file.WriteLine("\n==========================================================");
+                    file.WriteLine("");
+                    file.WriteLine("");
+
+                    file.WriteLine(current_differentialRequest.requestMethod + " " + current_differentialRequest.url + " " + "HTTP/" + current_differentialRequest.protocolVersion);
+                    foreach (HTTPHeaderItem httpHeaderItem in current_differentialRequest.headers)
+                    {
+                        if (!"Cookie".Equals(httpHeaderItem.Name))
+                        {
+                            file.WriteLine(httpHeaderItem.Name + ": " + httpHeaderItem.Value);
+                        }
+                        else
+                        {
+                            int index = 0;
+                            string cookieString = string.Empty;
+                            foreach (KeyValuePair<string, string> cookieNameValue in current_differentialRequest.remaining_cookies)
+                            {
+                                if (0 == index)
+                                {
+                                    cookieString = cookieNameValue.Key + "=" + cookieNameValue.Value;
+                                }
+                                else
+                                {
+                                    cookieString += "; " + cookieNameValue.Key + "=" + cookieNameValue.Value;
+                                }
+                                index++;
+                            }
+                            if (cookieString.Length > 0)
+                            {
+                                file.WriteLine("Cookie: " + cookieString);
+                            }
+                        }
+                    }
+
+                    if ("POST".Equals(current_differentialRequest.requestMethod))
+                    {
+                        file.WriteLine("");
+
+                        string body2write = string.Empty;
+
+                        int index = 0;
+                        foreach (KeyValuePair<string, string> bodyNameValue in current_differentialRequest.remaining_bodyParam)
+                        {
+                            if (0 == index)
+                            {
+                                body2write = bodyNameValue.Key + "=" + bodyNameValue.Value;
+                            }
+                            else
+                            {
+                                body2write += "&" + bodyNameValue.Key + "=" + bodyNameValue.Value;
+                            }
+                            index++;
+                        }
+                        if (body2write.Length > 0)
+                        {
+                            file.WriteLine(body2write);
+                        }
+                    }   
                 }
             }
 
