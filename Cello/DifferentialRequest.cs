@@ -933,21 +933,34 @@ namespace Cello
                     }
                 }*/
 
+                // if we delete a cookie (i.e. X) and later the response html string is the same and
+                // there is a header set-cookie to set that cookie (i.e. X), we consider that cookie
+                // is useless.
+                // if we delete a cookie (i.e. X) and later the response html string is different then
+                // we consider that the cookie is critical no matter there is a header set-cookie to X or not
+                // but if the set-cookie X header occur with the meaningful value and html string is different 
+                // we consider there is a vulnerability (not yet implemented)
+
+                bool cookieCompareResult = false;
                 foreach (KeyValuePair<string, string> cookiePair in responseCookiesDict)
                 {
                     string value;
                     if (originResponseCookies.TryGetValue(cookiePair.Key, out value))
                     {
+                        cookieCompareResult = true;
                         continue;
                     }
                     else
                     {
-                        return false;
+                        //return false;
+                        cookieCompareResult = false;
+                        break;
                     }
                 }
 
                 // compare response string if it exists
-                if (null != htmlString && htmlString.Length > 0)
+                bool htmlStringCompareResult = true; // default to true, because if there is no response html, then it should be the same
+                if ((null != htmlString && htmlString.Length > 0) && (null != responseBodyString && responseBodyString.Length > 0))
                 {
                     HtmlDiff.HtmlDiff diffHelper = new HtmlDiff.HtmlDiff(requestDetials.session.GetResponseBodyAsString(), htmlString);
                     string diffOutput = diffHelper.Build();
@@ -960,7 +973,25 @@ namespace Cello
 
                     if (!IsWithinThreshold(responseBodyString.Length, htmlString.Length))
                     {
-                        return false;
+                        using (System.IO.StreamWriter file =
+                                            new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\response_original_"
+                                                + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + ".html"))
+                        {
+                            file.WriteLine(responseBodyString);
+                        }
+
+                        using (System.IO.StreamWriter file =
+                                            new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\response_test_"
+                                                + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + ".html"))
+                        {
+                            file.WriteLine(htmlString);
+                        }
+                        //return false;
+                        htmlStringCompareResult = false;
+                    }
+                    else
+                    {
+                        htmlStringCompareResult = true;
                     }
                     //(form as DifferentialForm).WriteLine(responseBodyString);
                     //(form as DifferentialForm).WriteLine("originalStringLength: " + responseBodyString.Length);
@@ -969,6 +1000,10 @@ namespace Cello
                     //(form as DifferentialForm).WriteLine("diffOutput:");
                     //(form as DifferentialForm).WriteLine(diffOutput);
                     //(form as DifferentialForm).WriteLine(requestDetials.session.GetResponseBodyAsString());
+                }
+                else
+                {
+                    MessageBox.Show("response not match, either original response doesn't have response html or the test response doesn't have response html");
                 }
 
                 // not working code snippet
@@ -988,7 +1023,53 @@ namespace Cello
                 //    (form as DifferentialForm).WriteLine("response cookies:");
                 //    (form as DifferentialForm).WriteLine("cookie: " + cookieName + "=" + cookieValue);
                 //}
-                return true;
+
+                //return true;
+
+                int htmlStringLength = 0;
+                int responseStringLength = 0;
+                if (null != htmlString)
+                {
+                    htmlStringLength = htmlString.Length;
+                }
+                else
+                {
+                    htmlStringLength = 0;
+                }
+
+                if (null != responseBodyString)
+                {
+                    responseStringLength = responseBodyString.Length;
+                }
+                else
+                {
+                    responseStringLength = 0;
+                }
+
+                if ((0 == htmlStringLength && 0 != responseStringLength) || (0 != htmlStringLength && 0 == responseStringLength))
+                {
+                    return false;
+                }
+                else
+                {
+                    if (htmlStringCompareResult)
+                    {
+                        return true;
+                    }
+                    else if (!htmlStringCompareResult && cookieCompareResult)
+                    {
+                        return false;
+                    }
+                    else if (!htmlStringCompareResult && !cookieCompareResult)
+                    {
+                        MessageBox.Show("a possible vulnerability found");
+                        return false;
+                    }
+                    else
+                    {
+                        throw new Exception("compare html diff error");
+                    }
+                }
             }
 
             public bool IsWithinThreshold(int originLength, int newLength)
@@ -999,7 +1080,7 @@ namespace Cello
                 
                 // we use 0.01 as the threshold
                 double threshold = 0.01;
-                return threshold > Math.Abs(originLength - newLength) / originLength;
+                return (Math.Abs(originLength - newLength) / (double)originLength) < threshold;
             }
             
             // ToDo:

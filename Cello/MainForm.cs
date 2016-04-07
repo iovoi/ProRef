@@ -34,6 +34,7 @@ namespace Cello
             }
 
             treeView1.NodeMouseDoubleClick += write2file_OnDoubleClick;
+            //treeView1.NodeMouseClick += GetNodeOnClick;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -288,5 +289,35 @@ namespace Cello
             updateTree caller = (updateTree)result.AsyncDelegate;
             caller.EndInvoke(ref this.treeView1, result);
         }*/
+
+        public void GetNodeOnClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (MouseButtons.Right == e.Button)
+            {
+                Action action = delegate()
+                {
+                    proxy.request_chain = new List<Session>();
+                    proxy.page_sessionID_chain = new List<int>();
+                    List<int> request_session_ids = proxy.page_sessionID_chain;
+                    int session_id;
+                    if (Int32.TryParse(e.Node.Name, out session_id))
+                    {
+                        Node node = proxy.SessionWoods.NodeDict[session_id];
+                        Session session = proxy.SessionWoods.SessionDict[session_id];
+                        proxy.request_chain.Insert(0, session);
+                        request_session_ids.Insert(0, node.ID);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Node ID invalid");
+                    }
+                };
+                BeginInvoke(action);
+
+                this.diff_Form = new DifferentialForm(proxy);
+                diff_Form.Show();
+            }
+        }
+
     }
 }

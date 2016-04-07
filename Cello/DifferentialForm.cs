@@ -136,7 +136,7 @@ namespace Cello
                                 }
                                 else
                                 {
-                                    cookieString += "; " + cookieNameValue.Key + "=" + cookieNameValue.Value;
+                                    cookieString += ";" + cookieNameValue.Key + "=" + cookieNameValue.Value;
                                 }
                                 index++;
                             }
