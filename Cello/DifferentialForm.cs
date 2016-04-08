@@ -113,7 +113,7 @@ namespace Cello
                 {
                     //proxy.SessionWoods.SessionDict[session_id].WriteRequestToStream(false, true, true, file);
                     file.Write(System.Text.Encoding.Default.GetString(session2write.arrRequest));
-                    file.WriteLine("\n==========================================================");
+                    file.WriteLine("\r\n==========================================================");
                     file.WriteLine("");
                     file.WriteLine("");
 

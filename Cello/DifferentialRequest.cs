@@ -28,6 +28,9 @@ namespace Cello
             //public Dictionary<string, string> reduced_cookies;
             public Dictionary<string, string> remaining_cookies;
             public string url;
+            public string urlWithoutParam;
+            public Dictionary<string, string> urlParam; // this field will not be null, check count to determine whether null
+            public Dictionary<string, string> remaining_urlParam;
             public string requestMethod;
             public int responseCode;
             public string requestBody;
@@ -45,6 +48,25 @@ namespace Cello
                 requestBody = rqst_details.request_body;
                 protocolVersion = rqst_details.session.RequestHeaders.HTTPVersion.Contains("1.1")? HttpVersion.Version11 : HttpVersion.Version10;
                 url = rqst_details.fullUrl;
+                if (rqst_details.fullUrl.Contains('?'))
+                {
+                    urlParam = new Dictionary<string, string>();
+                    string[] urlStringArray = rqst_details.fullUrl.Split(new string[] {"?"}, StringSplitOptions.RemoveEmptyEntries);
+                    urlWithoutParam = urlStringArray[0];
+                    string[] paramsInUrl = urlStringArray[1].Split('&');
+                    foreach (string param in paramsInUrl)
+                    {
+                        string[] paramPair = param.Split('=');
+                        Debug.Assert(paramPair.Length == 2);
+                        urlParam.Add(paramPair[0], paramPair[1]);
+                    }
+                }
+                else
+                {
+                    urlWithoutParam = string.Empty;
+                    urlParam = new Dictionary<string, string>();
+                }
+
                 if (null != requestBody && ! "".Equals(requestBody))
                 {
                     bodyParams = new Dictionary<string, string>();
@@ -109,6 +131,7 @@ namespace Cello
                 int cookies_final_count = 0;
                 //reduced_cookies = new Dictionary<string, string>();
                 remaining_cookies = new Dictionary<string, string>();
+                remaining_urlParam = new Dictionary<string, string>();
                 
                 // first we replay the request first to see if it can be replayed
                 //===================================================================
@@ -338,7 +361,59 @@ namespace Cello
                 }
                 else
                 {
-                    (form as DifferentialForm).WriteLine("no cookie in this GET request, omit this request");
+                    (form as DifferentialForm).WriteLine("no cookie in this GET request, omit cookies");
+                }
+
+                // if this request have url parameters, we also handle this situation
+                if (null != urlParam && urlParam.Count > 0)
+                {
+                    while (urlParam.Count > 0)
+                    {
+                        KeyValuePair<string, string> urlParam_name_value = urlParam.Last();
+                        urlParam.Remove(urlParam.Last().Key);
+                        HttpWebRequest httpRequest = ForgeGETRequest();
+                        try
+                        {
+                            using (HttpWebResponse httpWebResponse = (HttpWebResponse)httpRequest.GetResponse())
+                            using (Stream stream = httpWebResponse.GetResponseStream())
+                            {
+                                Stream responseStream = stream;
+                                if (httpWebResponse.ContentEncoding.ToLower().Contains("gzip"))
+                                {
+                                    responseStream = new GZipStream(stream, CompressionMode.Decompress);
+                                }
+                                else if (httpWebResponse.ContentEncoding.ToLower().Contains("deflate"))
+                                {
+                                    responseStream = new DeflateStream(stream, CompressionMode.Decompress);
+                                }
+
+                                using (StreamReader responseReader = new StreamReader(responseStream))
+                                {
+                                    string responseString = responseReader.ReadToEnd();
+                                    //responseString = System.Text.Encoding.UTF8.GetString(responseString);
+                                    //(form as DifferentialForm).WriteLine(responseString);
+                                    if (IsSameResponse(httpWebResponse, responseString))
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        remaining_urlParam.Add(urlParam_name_value.Key, urlParam_name_value.Value);
+                                    }
+                                }
+                            }
+
+                            form.WriteLine("remaining url param count: " + remaining_urlParam.Count);
+                        }
+                        catch (WebException we)
+                        {
+                            MessageBox.Show(we.ToString());
+                        }
+                    }
+                }
+                else
+                {
+                    form.WriteLine("no url parameters in the GET request, omit url paramters");
                 }
             }
 
@@ -348,6 +423,7 @@ namespace Cello
                 int bodyParam_final_count = 0;
                 remaining_cookies = new Dictionary<string, string>();
                 remaining_bodyParam = new Dictionary<string, string>();
+                remaining_urlParam = new Dictionary<string, string>();
                 
                 // first we replay the request to see if it can be replayed
                 HttpWebRequest replayRequest = ForgePOSTRequest();
@@ -507,11 +583,105 @@ namespace Cello
                 {
                     form.WriteLine("no cookie in this POST request");
                 }
+
+                // if there is url paramters, we handle them here
+                if (null != urlParam && urlParam.Count > 0)
+                {
+                    while (urlParam.Count > 0)
+                    {
+                        KeyValuePair<string, string> urlParam_name_value = urlParam.Last();
+                        urlParam.Remove(urlParam.Last().Key);
+                        HttpWebRequest httpRequest = ForgePOSTRequest();
+                        try
+                        {
+                            using (HttpWebResponse httpWebResponse = (HttpWebResponse)httpRequest.GetResponse())
+                            using (Stream stream = httpWebResponse.GetResponseStream())
+                            {
+                                Stream responseStream = stream;
+                                if (httpWebResponse.ContentEncoding.ToLower().Contains("gzip"))
+                                {
+                                    responseStream = new GZipStream(stream, CompressionMode.Decompress);
+                                }
+                                else if (httpWebResponse.ContentEncoding.ToLower().Contains("deflate"))
+                                {
+                                    responseStream = new DeflateStream(stream, CompressionMode.Decompress);
+                                }
+
+                                using (StreamReader responseReader = new StreamReader(responseStream))
+                                {
+                                    string responseString = responseReader.ReadToEnd();
+                                    //responseString = System.Text.Encoding.UTF8.GetString(responseString);
+                                    //(form as DifferentialForm).WriteLine(responseString);
+                                    if (IsSameResponse(httpWebResponse, responseString))
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        remaining_urlParam.Add(urlParam_name_value.Key, urlParam_name_value.Value);
+                                    }
+                                }
+                            }
+
+                            form.WriteLine("remaining url param count: " + remaining_urlParam.Count);
+                        }
+                        catch (WebException we)
+                        {
+                            MessageBox.Show(we.ToString());
+                        }
+                    }
+                }
+                else
+                {
+                    form.WriteLine("no url parameters in this POST request, omit url paramters");
+                }
             }
 
             public HttpWebRequest ForgePOSTRequest()
             {
-                HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(requestDetials.fullUrl);
+                HttpWebRequest httpRequest = null;
+                if (!requestDetials.fullUrl.Contains('?'))
+                {
+                    httpRequest = (HttpWebRequest)WebRequest.Create(requestDetials.fullUrl);
+                }
+                else
+                {
+                    string url2request = urlWithoutParam;
+                    int urlParamIndex = 0;
+
+                    if (null != urlParam)
+                    {
+                        foreach (KeyValuePair<string, string> paramPair in urlParam)
+                        {
+                            if (0 == urlParamIndex)
+                            {
+                                url2request += "?" + paramPair.Key + "=" + paramPair.Value;
+                            }
+                            else
+                            {
+                                url2request += "&" + paramPair.Key + "=" + paramPair.Value;
+                            }
+                            urlParamIndex++;
+                        }
+                    }
+
+                    if (null != remaining_urlParam)
+                    {
+                        foreach (KeyValuePair<string, string> remaining_paramPair in remaining_urlParam)
+                        {
+                            if (0 == urlParamIndex)
+                            {
+                                url2request += "?" + remaining_paramPair.Key + "=" + remaining_paramPair.Value;
+                            }
+                            else
+                            {
+                                url2request += "&" + remaining_paramPair.Key + "=" + remaining_paramPair.Value;
+                            }
+                            urlParamIndex++;
+                        }
+                    }
+                    httpRequest = (HttpWebRequest)WebRequest.Create(url2request);
+                }
 
                 httpRequest.AllowAutoRedirect = false;
 
@@ -701,7 +871,49 @@ namespace Cello
 
             public HttpWebRequest ForgeGETRequest()
             {
-                HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(requestDetials.fullUrl);
+                HttpWebRequest httpRequest = null;
+                if (!requestDetials.fullUrl.Contains('?'))
+                {
+                    httpRequest = (HttpWebRequest)WebRequest.Create(requestDetials.fullUrl);
+                }
+                else
+                {
+                    string url2request = urlWithoutParam;
+                    int urlParamIndex = 0;
+
+                    if (null != urlParam)
+                    {
+                        foreach (KeyValuePair<string, string> paramPair in urlParam)
+                        {
+                            if (0 == urlParamIndex)
+                            {
+                                url2request += "?" + paramPair.Key + "=" + paramPair.Value;
+                            }
+                            else
+                            {
+                                url2request += "&" + paramPair.Key + "=" + paramPair.Value;
+                            }
+                            urlParamIndex++;
+                        }
+                    }
+
+                    if (null != remaining_urlParam)
+                    {
+                        foreach (KeyValuePair<string, string> remaining_paramPair in remaining_urlParam)
+                        {
+                            if (0 == urlParamIndex)
+                            {
+                                url2request += "?" + remaining_paramPair.Key + "=" + remaining_paramPair.Value;
+                            }
+                            else
+                            {
+                                url2request += "&" + remaining_paramPair.Key + "=" + remaining_paramPair.Value;
+                            }
+                            urlParamIndex++;
+                        }
+                    }
+                    httpRequest = (HttpWebRequest)WebRequest.Create(url2request);
+                }
 
                 httpRequest.AllowAutoRedirect = false;
 
@@ -850,6 +1062,7 @@ namespace Cello
             {
                 if (((int)httpWebResponse.StatusCode) != this.responseCode)
                 {
+                    //MessageBox.Show("response code changed");
                     return false;
                 }
                 
@@ -1003,7 +1216,7 @@ namespace Cello
                 }
                 else
                 {
-                    MessageBox.Show("response not match, either original response doesn't have response html or the test response doesn't have response html");
+                    //MessageBox.Show("response not match, either original response doesn't have response html or the test response doesn't have response html");
                 }
 
                 // not working code snippet
