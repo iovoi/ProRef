@@ -61,7 +61,8 @@ namespace Cello
 
             // set up what domains to capture and what types to remove
             // later should be modified to load from configuration file
-            domains[0] = "facebook";
+            //domains[0] = "facebook";
+            domains[0] = "instagram";
             domains[1] = "akamaihd";
             removeTypes[0] = "jpg";
             removeTypes[1] = "png";

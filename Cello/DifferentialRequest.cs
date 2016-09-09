@@ -57,7 +57,7 @@ namespace Cello
                     foreach (string param in paramsInUrl)
                     {
                         string[] paramPair = param.Split('=');
-                        Debug.Assert(paramPair.Length == 2);
+                        //Debug.Assert(paramPair.Length == 2);
                         urlParam.Add(paramPair[0], paramPair[1]);
                     }
                 }
@@ -575,6 +575,9 @@ namespace Cello
                         catch (WebException we)
                         {
                             MessageBox.Show(we.ToString());
+                            remaining_cookies.Add(cookie_name_value.Key, cookie_name_value.Value);
+                            cookies_final_count++;
+                            continue;
                         }
                         //ToDo: compare whether the response is different or not to determine whether the request is valid or not
                     }
@@ -1275,7 +1278,7 @@ namespace Cello
                     }
                     else if (!htmlStringCompareResult && !cookieCompareResult)
                     {
-                        MessageBox.Show("a possible vulnerability found");
+                        //MessageBox.Show("a possible vulnerability found");
                         return false;
                     }
                     else
