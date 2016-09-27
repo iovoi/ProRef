@@ -136,12 +136,12 @@ namespace Cello
 
         public void Start()
         {
-            mainForm.WriteLine("Starting Cello...");
+            mainForm.WriteLine("Starting...");
 
             //FiddlerApplication.Startup(7777, true, true, true);
             FiddlerApplication.Startup(7777, proxy_config);
 
-            mainForm.WriteLine("Cello started...");
+            mainForm.WriteLine("Started...");
             mainForm.WriteLine(" "); // print return to separate the output line later
             //mainForm.WriteLine("Press q to quit");
 

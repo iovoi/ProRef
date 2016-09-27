@@ -67,9 +67,10 @@ namespace Cello
                     urlParam = new Dictionary<string, string>();
                 }
 
+                bodyParams = new Dictionary<string, string>();
                 if (null != requestBody && ! "".Equals(requestBody))
                 {
-                    bodyParams = new Dictionary<string, string>();
+                    //bodyParams = new Dictionary<string, string>();
                     foreach (string nameValuePairString in requestBody.Split('&'))
                     {
                         string[] nameAndValue = nameValuePairString.Split('=');
@@ -407,6 +408,8 @@ namespace Cello
                         }
                         catch (WebException we)
                         {
+                            remaining_urlParam.Add(urlParam_name_value.Key, urlParam_name_value.Value);
+                            form.WriteLine("remaining url param count: " + remaining_urlParam.Count);
                             MessageBox.Show(we.ToString());
                         }
                     }
