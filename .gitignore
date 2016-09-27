@@ -3,3 +3,4 @@ output/
 !/*.cs
 !Cello/*.cs
 !.gitignore
+!models/*.*
