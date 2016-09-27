@@ -1,0 +1,70 @@
+(*Assume a secure channel between users and the Instagram server*)
+free https:channel [private].
+
+type url.
+
+(*The url for requesting a login to Instagram: 
+  instagram_request = GET https://www.instagram.com/*)
+const instagram_request:url.
+
+(*The url for logging into Instagram: 
+  instagram_login = POST https://www.instagram.com/accounts/login/ajax*)
+const instagram_login:url.
+
+type html.
+
+(*On receiving a request to url, 
+  Instagram responds with a html page corresponding to the url*)
+fun response(url):html.
+
+type command.
+
+(*A command to inform the user browser to set a cookie named as csrftoken*)
+const set_cookie_csrftoken:command.
+
+type cookie.
+
+fun setpassword(bitstring):bitstring [private].
+
+const ok:bitstring.
+
+fun homepage(bitstring):html [private].
+
+(*property*)
+free uid:bitstring [private].
+query attacker(homepage(uid)).
+
+event start_user(bitstring).
+event end_Ins(bitstring).
+
+query x:bitstring; event(end_Ins(x))==> event(start_user(x)).
+
+let user (username:bitstring)= 
+           let password=setpassword(username) in
+           !(       
+             out(https,instagram_request);
+             event start_user(username);
+             in(https,(x:html,y:command));
+             if y=set_cookie_csrftoken then
+             new csrftoken1:cookie;
+             out(https,(instagram_login,csrftoken1,username,password));
+             in(https,(=ok,=true,=username,t:cookie,z:bitstring));
+             out(https,(instagram_request,z));
+             in(https,(h:html,=t,s:bitstring))
+            ).
+
+let Ins = in(https,=instagram_request); 
+          let html_page=response(instagram_request) in
+          out(https,(html_page,set_cookie_csrftoken));
+          in(https,(=instagram_login,token:cookie,id:bitstring,ps:bitstring));
+          if ps=setpassword(id) then
+          new sessionid1:bitstring;
+          new csrftoken2:cookie;
+          out(https,(ok,true,id,csrftoken2,sessionid1));
+          in(https,(=instagram_request,=sessionid1));
+          new sessionid2:bitstring;
+          out(https,(homepage(id),csrftoken2,sessionid2));
+          event end_Ins(id).
+
+process !(new uname:bitstring; user(uname))|!Ins|user(uid)
+
