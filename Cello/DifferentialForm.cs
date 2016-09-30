@@ -108,7 +108,7 @@ namespace Cello
                 SessionData session2write = new SessionData(proxy.SessionWoods.SessionDict[session_id]);
 
                 using (System.IO.StreamWriter file = 
-                    new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\refine_" 
+                    new System.IO.StreamWriter(".\\output\\refine_" 
                         + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + session_id + ".txt"))
                 {
                     //proxy.SessionWoods.SessionDict[session_id].WriteRequestToStream(false, true, true, file);

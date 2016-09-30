@@ -1193,14 +1193,14 @@ namespace Cello
                     if (!IsWithinThreshold(responseBodyString.Length, htmlString.Length))
                     {
                         using (System.IO.StreamWriter file =
-                                            new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\response_original_"
+                                            new System.IO.StreamWriter(".\\output\\response_original_"
                                                 + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + ".html"))
                         {
                             file.WriteLine(responseBodyString);
                         }
 
                         using (System.IO.StreamWriter file =
-                                            new System.IO.StreamWriter("D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\response_test_"
+                                            new System.IO.StreamWriter(".\\output\\response_test_"
                                                 + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + ".html"))
                         {
                             file.WriteLine(htmlString);

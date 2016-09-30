@@ -203,9 +203,9 @@ namespace Cello
                         throw new ArgumentException("Node ID invalid");
                     }
 
-                    string requestFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                    string requestFile2Write = ".\\output\\"
                             + "request_" + DateTime.Now.ToString("yyyyMMddHHmmss"); 
-                    string scriptFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                    string scriptFile2Write = ".\\output\\"
                             + "script_" + DateTime.Now.ToString("yyyyMMddHHmmss"); 
                     int num = 0;
                     foreach (Session s in proxy.request_chain)
@@ -265,9 +265,9 @@ namespace Cello
                         throw new ArgumentException("Node ID invalid");
                     }
 
-                    string requestFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                    string requestFile2Write = ".\\output\\"
                             + "request_" + DateTime.Now.ToString("yyyyMMddHHmmss");
-                    string scriptFile2Write = "D:\\data\\workspace\\VisualStudioProject\\Cello\\output\\"
+                    string scriptFile2Write = ".\\output\\"
                             + "script_" + DateTime.Now.ToString("yyyyMMddHHmmss");
                     int num = 0;
                     foreach (Session s in proxy.request_chain)

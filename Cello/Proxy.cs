@@ -239,7 +239,7 @@ namespace Cello
             // filtering out the external request to unrelted websites
             if (!(s.url.Contains(domains[0]) || s.url.Contains(domains[1])))
             {
-                return true;
+                //return true;
             }
 
             // filtering out the useless files such as image or css files
